@@ -15,7 +15,9 @@ struct FConveyorProduct
 	GENERATED_BODY()
 
 	ARATestActor* TestActor;
-	float DistanceAlongSpline;
+	float Distance;
+
+	FConveyorProduct() : TestActor(nullptr), Distance(0.f) {}
 };
 
 /**
@@ -48,13 +50,13 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Conveyor")
 	FVector SplineStartLocation;
 
-	UPROPERTY(EditAnywhere, Category = "Conveyor")
-	TSubclassOf<ARATestActor> TestBP;
-
 	UPROPERTY(VisibleAnywhere)
 	TArray<FConveyorProduct> Products;
 
 public:
-	UFUNCTION(BlueprintCallable, CallInEditor)
-	void ProductSpawn();
+	UFUNCTION(BlueprintCallable)
+	void ProductSpawn(TSubclassOf<ARATestActor> ProductClass);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveProduct(AActor* Actor);
 };

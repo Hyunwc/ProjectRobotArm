@@ -33,39 +33,52 @@ void ARAConveyor::Tick(float DeltaTime)
 
 	const float SplineLength = Spline->GetSplineLength();
 
-	for (auto& Product : Products)
+	for (int32 i = Products.Num() - 1; i >= 0; i--)
 	{
-		if (!Product.TestActor)
+		FConveyorProduct& Prod = Products[i];
+
+		if (IsValid(Prod.TestActor))
 		{
-			continue;
+			// 거리 업데이트
+			Prod.Distance += MoveSpeed * DeltaTime;
+			FVector NewLocation = Spline->GetLocationAtDistanceAlongSpline(Prod.Distance, ESplineCoordinateSpace::World);
+			Prod.TestActor->SetActorLocation(NewLocation);
+
+			// 끝까지 가면 삭제
+			if (Prod.Distance > Spline->GetSplineLength())
+			{
+				Prod.TestActor->Destroy();
+				Products.RemoveAt(i);
+			}
 		}
-
-		// 거리 업데이트
-		Product.DistanceAlongSpline += MoveSpeed * DeltaTime;
-
-		// 끝이면 제거
-		if (Product.DistanceAlongSpline > SplineLength)
+		else
 		{
-			Product.TestActor->Destroy();
-			Product.TestActor = nullptr;
-			continue;
+			Products.RemoveAt(i);
 		}
-
-		FVector SplineLocation = Spline->GetLocationAtDistanceAlongSpline(Product.DistanceAlongSpline, ESplineCoordinateSpace::World);
-
-		Product.TestActor->SetActorLocation(SplineLocation);
 	}
-
 }
 
-void ARAConveyor::ProductSpawn()
+void ARAConveyor::ProductSpawn(TSubclassOf<ARATestActor> ProductClass)
 {
-	ARATestActor* NewActor = GetWorld()->SpawnActor<ARATestActor>(TestBP, SplineStartLocation, FRotator::ZeroRotator);
+	if (!ProductClass)
+	{
+		return;
+	}
+
+	ARATestActor* NewActor = GetWorld()->SpawnActor<ARATestActor>(ProductClass, SplineStartLocation, FRotator::ZeroRotator);
 	if (NewActor)
 	{
 		FConveyorProduct Product;
 		Product.TestActor = NewActor;
-		Product.DistanceAlongSpline = 0.0f;
+		Product.Distance = 0.0f;
 		Products.Add(Product);
 	}
+}
+
+void ARAConveyor::RemoveProduct(AActor* Actor)
+{
+	Products.RemoveAll([Actor](const FConveyorProduct& Prod)
+		{
+			return Prod.TestActor == Actor;
+		});
 }

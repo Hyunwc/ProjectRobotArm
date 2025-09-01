@@ -8,6 +8,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/RARobotArmFSM.h"
+#include "RAConveyor.h"
+#include "RATestActor.h"
+#include "Kismet/GameplayStatics.h"
 
 ARARobotArm::ARARobotArm()
 {
@@ -34,6 +37,14 @@ ARARobotArm::ARARobotArm()
 void ARARobotArm::BeginPlay()
 {
 	Super::BeginPlay();
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARAConveyor::StaticClass(), FoundActors);
+	if (FoundActors.Num() > 0)
+	{
+		Conveyor = Cast<ARAConveyor>(FoundActors[0]);
+		UE_LOG(LogTemp, Log, TEXT("RobotArm : 컨베이어 찾았습니다"));
+	}
 
 	StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 	ReturnTransform = StartTransform;
@@ -85,25 +96,21 @@ void ARARobotArm::IdleState()
 
 void ARARobotArm::SearchState()
 {
-	// 오버랩된 물품 탐지
-	TArray<AActor*> OverlappingActors;
-	BoxComp->GetOverlappingActors(OverlappingActors);
-
-	if (OverlappingActors.Num() > 0)
+	if (Conveyor->Products.Num() > 0)
 	{
-		GrabActor = OverlappingActors[0];
+		GrabActor = Conveyor->Products[0].TestActor;
+
 		FString GrabMsg = GrabActor->GetActorLabel();
-		GEngine->AddOnScreenDebugMessage(0, 5.0f, FColor::Orange, GrabMsg);
+		GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Orange, GrabMsg);
 
 		if (GrabActor)
 		{
 			GrabTransform = GrabActor->GetActorTransform();
 
 			Alpha = 0.0f;
-			
+
 			// 물건 좌표 갱신했으니 Attach 상태로
 			FSM->ChangeState(ERobotArmState::Attach);
-			//CurrentState = EActionState::MovingToTarget;
 		}
 	}
 	else
@@ -126,14 +133,21 @@ void ARARobotArm::AttachState()
 	{
 		if (GrabActor)
 		{
+			GEngine->AddOnScreenDebugMessage(8, 2.f, FColor::Red, TEXT("유효"));
 			GrabTransform = GrabActor->GetActorTransform();
+		
+			// 어태치 이 후에도 액터가 스플라인을 따라가지 않게 하기 위해 배열에서 제거
+			if (Conveyor)
+			{
+				Conveyor->RemoveProduct(GrabActor);
+			}
 
 			MoveToTransform(GrabTransform, Delta);
-			// 메시를 End_Ctrl에 Attach
+
 			GrabActor->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
-
+		
 			Alpha = 0.0f;
-
+		
 			FSM->ChangeState(ERobotArmState::Carry);
 		}
 	}
@@ -167,8 +181,6 @@ void ARARobotArm::DettachState()
 
 		Alpha = 0.0f;
 		FSM->ChangeState(ERobotArmState::Return);
-
-		//CurrentState = EActionState::Returning;
 	}
 }
 
@@ -187,8 +199,6 @@ void ARARobotArm::ReturnState()
 		Alpha = 0.0f;
 
 		FSM->ChangeState(ERobotArmState::Idle);
-		//CurrentState = EActionState::Idle;
-		//UE_LOG(LogTemp, Warning, TEXT("Robot arm returned to idle state."));
 	}
 }
 
