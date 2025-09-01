@@ -7,6 +7,12 @@
 #include "RAType.generated.h"
 
 
+UENUM(BlueprintType)
+enum class EProductType : uint8
+{
+	Food,
+	Clothes
+};
 /**
  * 
  */

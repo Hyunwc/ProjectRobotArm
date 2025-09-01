@@ -10,6 +10,8 @@ class UControlRigComponent;
 class USkeletalMeshComponent;
 class UBoxComponent;
 class URARobotArmFSM;
+class ARAConveyor;
+
 /**
  * 
  */
@@ -70,7 +72,10 @@ public:
 
 	// 집을 액터
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RobotArm")
-	AActor* GrabActor;
+	class ARATestActor* GrabActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Conveyor")
+	ARAConveyor* Conveyor;
 
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")
