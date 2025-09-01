@@ -7,7 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/PrimitiveComponent.h"
-
+#include "Components/RARobotArmFSM.h"
 
 ARARobotArm::ARARobotArm()
 {
@@ -28,8 +28,7 @@ ARARobotArm::ARARobotArm()
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	BoxComp->SetupAttachment(Root);
 
-	CurrentState = EActionState::Idle;
-
+	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 }
 
 void ARARobotArm::BeginPlay()
@@ -44,106 +43,152 @@ void ARARobotArm::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	Delta = DeltaTime;
 
 	FTransform EffectorTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 
 	EndEffectorScene->SetWorldTransform(EffectorTransform);
 
-	UpdateRobotState(DeltaTime);
-
-	
+	switch (FSM->CurrentState)
+	{
+	case ERobotArmState::Idle:
+		IdleState();
+		break;
+	case ERobotArmState::Search:
+		SearchState();
+		break;
+	case ERobotArmState::Attach:
+		AttachState();
+		break;
+	case ERobotArmState::Carry:
+		CarryState();
+		break;
+	case ERobotArmState::Dettach:
+		DettachState();
+		break;
+	case ERobotArmState::Return:
+		ReturnState();
+		break;
+	}
 }
 
+// 이 함수 들어오면 Search상태로
 void ARARobotArm::StartRobotAction()
 {
-	if (CurrentState != EActionState::Idle) return;
+	FSM->ChangeState(ERobotArmState::Search);
+}
 
+void ARARobotArm::IdleState()
+{
+	GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Cyan, TEXT("명령 대기 중..."));
+}
+
+void ARARobotArm::SearchState()
+{
+	// 오버랩된 물품 탐지
 	TArray<AActor*> OverlappingActors;
 	BoxComp->GetOverlappingActors(OverlappingActors);
 
 	if (OverlappingActors.Num() > 0)
 	{
-		CurrentTargetMesh = OverlappingActors[0];
-		if (CurrentTargetMesh)
-		{
-			// 목표 트랜스폼은 타겟 메시의 월드 트랜스폼으로 설정
-			GrabTransform = CurrentTargetMesh->GetActorTransform();
+		GrabActor = OverlappingActors[0];
+		FString GrabMsg = GrabActor->GetActorLabel();
+		GEngine->AddOnScreenDebugMessage(0, 5.0f, FColor::Orange, GrabMsg);
 
-			// 현재 End_Ctrl의 트랜스폼을 가져옴
-			
+		if (GrabActor)
+		{
+			GrabTransform = GrabActor->GetActorTransform();
+
 			Alpha = 0.0f;
-			CurrentState = EActionState::MovingToTarget;
+			
+			// 물건 좌표 갱신했으니 Attach 상태로
+			FSM->ChangeState(ERobotArmState::Attach);
+			//CurrentState = EActionState::MovingToTarget;
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No meshes detected in the box."));
+		UE_LOG(LogTemp, Warning, TEXT("No meshes searched"));
 	}
 }
 
-void ARARobotArm::UpdateRobotState(float DeltaTime)
+void ARARobotArm::AttachState()
 {
-	switch (CurrentState)
+	if (Alpha == 0.0f)
 	{
-	case EActionState::MovingToTarget:
-		if (Alpha == 0.0f)
-		{
-			StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
-		}
-		MoveToTransform(GrabTransform, DeltaTime);
-		if (Alpha >= 1.0f)
-		{
-			CurrentState = EActionState::Grabbing;
-		}
-		break;
+		StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
+	}
 
-	case EActionState::Grabbing:
-		if (CurrentTargetMesh)
+	// 물건집으러 이동
+	MoveToTransform(GrabTransform, Delta);
+
+	if (Alpha >= 1.0f)
+	{
+		if (GrabActor)
 		{
+			GrabTransform = GrabActor->GetActorTransform();
+
+			MoveToTransform(GrabTransform, Delta);
 			// 메시를 End_Ctrl에 Attach
-			//FAttachmentTransformRules AttachRules(EAttachmentRule::KeepWorld, false);
-			CurrentTargetMesh->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
-
-			//StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
+			GrabActor->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
 
 			Alpha = 0.0f;
-			CurrentState = EActionState::MovingToDestination;
+
+			FSM->ChangeState(ERobotArmState::Carry);
 		}
-		break;
+	}
+}
 
-	case EActionState::MovingToDestination:
-		MoveToTransform(TargetTransform, DeltaTime);
-		if (Alpha >= 1.0f)
-		{
-			CurrentState = EActionState::Dropping;
-		}
-		break;
+void ARARobotArm::CarryState()
+{
+	if (Alpha == 0.0f)
+	{
+		StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
+	}
 
-	case EActionState::Dropping:
-		if (CurrentTargetMesh)
-		{
-			// 메시 분리
-			CurrentTargetMesh->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-			CurrentTargetMesh = nullptr;
+	// 목표 지점으로 이동
+	MoveToTransform(TargetTransform, Delta);
 
-			//StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
+	if (Alpha >= 1.0f)
+	{
+		FSM->ChangeState(ERobotArmState::Dettach);
+	}
+}
 
-			Alpha = 0.0f;
-			CurrentState = EActionState::Returning;
-		}
-		break;
+void ARARobotArm::DettachState()
+{
+	if (GrabActor)
+	{
+		// 메시 분리
+		GrabActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		GrabActor = nullptr;
 
-	case EActionState::Returning:
-		MoveToTransform(ReturnTransform, DeltaTime);
-		if (Alpha >= 1.0f)
-		{
-			CurrentState = EActionState::Idle;
-			UE_LOG(LogTemp, Warning, TEXT("Robot arm returned to idle state."));
-		}
-		break;
+		//StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 
-	case EActionState::Idle:
-		break;
+		Alpha = 0.0f;
+		FSM->ChangeState(ERobotArmState::Return);
+
+		//CurrentState = EActionState::Returning;
+	}
+}
+
+void ARARobotArm::ReturnState()
+{
+	if (Alpha == 0.0f)
+	{
+		StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
+	}
+
+	// 복귀 지점으로 이동
+	MoveToTransform(ReturnTransform, Delta);
+
+	if (Alpha >= 1.0f)
+	{
+		Alpha = 0.0f;
+
+		FSM->ChangeState(ERobotArmState::Idle);
+		//CurrentState = EActionState::Idle;
+		//UE_LOG(LogTemp, Warning, TEXT("Robot arm returned to idle state."));
 	}
 }
 
@@ -158,6 +203,5 @@ void ARARobotArm::MoveToTransform(const FTransform& Destination, float DeltaTime
 	// 새로운 트랜스폼으로 컨트롤릭 업데이트
 	FTransform NewTransform(R, L, S);
 
-	// SetControlTransform 함수가 ControlRigComponent에 있다고 가정합니다.
 	ControlRigComponent->SetControlTransform(EndEffectorName, NewTransform, EControlRigComponentSpace::WorldSpace);
 }

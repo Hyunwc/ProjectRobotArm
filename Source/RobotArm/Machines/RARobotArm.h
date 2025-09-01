@@ -9,6 +9,7 @@
 class UControlRigComponent;
 class USkeletalMeshComponent;
 class UBoxComponent;
+class URARobotArmFSM;
 /**
  * 
  */
@@ -36,7 +37,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USceneComponent* EndEffectorScene;
 
-	// 컨트롤릭의 이름
+	// 기준점이될 컨트롤릭의 이름
 	UPROPERTY(EditAnywhere, Category = "ControlRig")
 	FName EndEffectorName;
 
@@ -44,6 +45,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UBoxComponent* BoxComp;
 
+	// 목표 지점
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RobotArm")
 	FTransform TargetTransform;
 
@@ -54,35 +56,40 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RobotArm")
 	FTransform StartTransform;
 
+	// 집을 물건의 트랜스폼
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RobotArm")
 	FTransform GrabTransform;
 
+	// 복귀 지점
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RobotArm")
 	FTransform ReturnTransform;
 
-private:
-	// 현재 로봇암 상태
-	UPROPERTY()
-	AActor* CurrentTargetMesh;
+	// 로봇암의 FSM
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FSM")
+	URARobotArmFSM* FSM;
 
-	float Alpha;
+	// 집을 액터
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RobotArm")
+	AActor* GrabActor;
 
-	UFUNCTION(CallInEditor, Category = "RobotArm")
+public:
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")
 	void StartRobotAction();
 
-	// 로봇 동작 상태
-	enum class EActionState
-	{
-		Idle,
-		MovingToTarget,
-		Grabbing,
-		MovingToDestination,
-		Dropping,
-		Returning
-	};
+	// FSM 상태 관련 함수들
+	void IdleState();
+	void SearchState();
+	void AttachState();
+	void CarryState();
+	void DettachState();
+	void ReturnState();
 
-	EActionState CurrentState;
-
-	void UpdateRobotState(float DeltaTime);
+	UFUNCTION(BlueprintCallable)
 	void MoveToTransform(const FTransform& Destination, float DeltaTime);
+
+private:
+	float Alpha;
+
+	float Delta;
+
 };
