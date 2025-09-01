@@ -10,6 +10,7 @@
 UENUM(BlueprintType)
 enum class EProductType : uint8
 {
+	Default,
 	Food,
 	Clothes
 };

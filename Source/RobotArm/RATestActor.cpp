@@ -15,6 +15,8 @@ ARATestActor::ARATestActor()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(Root);
+
+	Type = EProductType::Default;
 }
 
 void ARATestActor::BeginPlay()

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "RAType.h"
 #include "RATestActor.generated.h"
 
 class USceneComponent;
@@ -29,4 +30,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UStaticMeshComponent* Mesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
+	EProductType Type;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	EProductType GetProductType() { return Type; }
 };
