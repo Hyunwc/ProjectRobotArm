@@ -12,7 +12,9 @@ enum class EProductType : uint8
 {
 	Default,
 	Food,
-	Clothes
+	Clothes,
+	Electronics,
+	Daily
 };
 /**
  * 

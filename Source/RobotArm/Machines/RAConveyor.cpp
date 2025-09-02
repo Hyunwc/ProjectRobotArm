@@ -4,6 +4,7 @@
 #include "Machines/RAConveyor.h"
 #include "Components/SplineComponent.h"
 #include "RATestActor.h"
+#include "Kismet/GameplayStatics.h"
 
 ARAConveyor::ARAConveyor()
 {
@@ -58,14 +59,18 @@ void ARAConveyor::Tick(float DeltaTime)
 	}
 }
 
-void ARAConveyor::ProductSpawn(TSubclassOf<ARATestActor> ProductClass)
+void ARAConveyor::ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductClass)
 {
-	if (!ProductClass)
+	if (ProductClass.Num() == 0)
 	{
 		return;
 	}
 
-	ARATestActor* NewActor = GetWorld()->SpawnActor<ARATestActor>(ProductClass, SplineStartLocation, FRotator::ZeroRotator);
+	int32 Index = FMath::RandRange(0, 3);
+
+	//ARATestActor* RandomProduct = ProductClass[Index];
+
+	ARATestActor* NewActor = GetWorld()->SpawnActor<ARATestActor>(ProductClass[Index], SplineStartLocation, FRotator::ZeroRotator);
 	if (NewActor)
 	{
 		FConveyorProduct Product;
