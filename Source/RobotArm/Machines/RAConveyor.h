@@ -53,10 +53,17 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<FConveyorProduct> Products;
 
+	// 나중에 컨베이어가 물건을 옮길 때 필요한 좌표
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Conveyor")
+	FTransform DettachTransform;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductClass);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveProduct(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable)
+	void AddProduct(AActor* Actor);
 };

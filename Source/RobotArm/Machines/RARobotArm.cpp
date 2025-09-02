@@ -62,6 +62,8 @@ void ARARobotArm::BeginPlay()
 
 	StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 	ReturnTransform = StartTransform;
+
+	TargetTransform = TargetConveyor->DettachTransform;
 }
 
 void ARARobotArm::Tick(float DeltaTime)
@@ -199,6 +201,8 @@ void ARARobotArm::DettachState()
 	{
 		// 메시 분리
 		GrabActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+		TargetConveyor->AddProduct(GrabActor);
 		GrabActor = nullptr;
 
 		//StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);

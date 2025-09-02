@@ -68,8 +68,6 @@ void ARAConveyor::ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductC
 
 	int32 Index = FMath::RandRange(0, 3);
 
-	//ARATestActor* RandomProduct = ProductClass[Index];
-
 	ARATestActor* NewActor = GetWorld()->SpawnActor<ARATestActor>(ProductClass[Index], SplineStartLocation, FRotator::ZeroRotator);
 	if (NewActor)
 	{
@@ -86,4 +84,15 @@ void ARAConveyor::RemoveProduct(AActor* Actor)
 		{
 			return Prod.TestActor == Actor;
 		});
+}
+
+void ARAConveyor::AddProduct(AActor* Actor)
+{
+	if (Actor)
+	{
+		FConveyorProduct NewProduct;
+		NewProduct.TestActor = Cast<ARATestActor>(Actor);
+		NewProduct.Distance = 0.0f;
+		Products.Add(NewProduct);
+	}
 }
