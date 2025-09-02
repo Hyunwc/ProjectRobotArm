@@ -15,6 +15,8 @@ class ARAConveyor;
 class ARATestActor;
 class ARASensor;
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnClassficationFinished, EProductType, Type);
 /**
  * 
  */
@@ -89,12 +91,16 @@ public:
 	EProductType TargetType;
 
 	// 센서 참조
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 	ARASensor* Sensor;
 
 	// 집은 물건을 보낼 컨베이어
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Conveyor")
 	ARAConveyor* TargetConveyor;
+
+	// 물품 분류 수를 증가시키라고 알리는 델리게이트
+	UPROPERTY(BlueprintAssignable)
+	FOnClassficationFinished OnClassficationFinished;
 
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")

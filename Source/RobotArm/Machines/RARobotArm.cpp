@@ -49,7 +49,7 @@ void ARARobotArm::BeginPlay()
 		Conveyor = Cast<ARAConveyor>(FoundConveyor[0]);
 		UE_LOG(LogTemp, Log, TEXT("RobotArm : 컨베이어 찾았습니다"));
 	}
-
+	
 	TArray<AActor*> FoundSensor;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARASensor::StaticClass(), FoundSensor);
 	if (FoundSensor.Num() > 0)
@@ -202,7 +202,11 @@ void ARARobotArm::DettachState()
 		// 메시 분리
 		GrabActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
+		// 타겟 컨베이어에서 물품이 다시 이동할 수 있도록 컨베이어의 배열에 더해줌.
 		TargetConveyor->AddProduct(GrabActor);
+
+		OnClassficationFinished.Broadcast(GrabActor->GetProductType());
+
 		GrabActor = nullptr;
 
 		//StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
