@@ -92,6 +92,10 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	ARASensor* Sensor;
 
+	// 집은 물건을 보낼 컨베이어
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Conveyor")
+	ARAConveyor* TargetConveyor;
+
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")
 	void StartSearch(EProductType SearchType);
