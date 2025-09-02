@@ -25,9 +25,9 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<ARATestActor> ProductClass;
+	TArray<TSubclassOf<ARATestActor>> ProductClass;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditInstanceOnly)
 	ARAConveyor* TargetConveyor;
 
 	FTimerHandle SpawnTimer;

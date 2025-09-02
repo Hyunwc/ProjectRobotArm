@@ -10,6 +10,7 @@
 #include "Components/RARobotArmFSM.h"
 #include "RAConveyor.h"
 #include "RATestActor.h"
+#include "RASensor.h"
 #include "Kismet/GameplayStatics.h"
 
 ARARobotArm::ARARobotArm()
@@ -32,19 +33,32 @@ ARARobotArm::ARARobotArm()
 	BoxComp->SetupAttachment(Root);
 
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
+
+	Type = EProductType::Default;
 }
 
 void ARARobotArm::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARAConveyor::StaticClass(), FoundActors);
-	if (FoundActors.Num() > 0)
+	// TODO : 에디터에서 할당하는 것으로 수정해봅니다.
+	TArray<AActor*> FoundConveyor;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARAConveyor::StaticClass(), FoundConveyor);
+	if (FoundConveyor.Num() > 0)
 	{
-		Conveyor = Cast<ARAConveyor>(FoundActors[0]);
+		Conveyor = Cast<ARAConveyor>(FoundConveyor[0]);
 		UE_LOG(LogTemp, Log, TEXT("RobotArm : 컨베이어 찾았습니다"));
 	}
+
+	TArray<AActor*> FoundSensor;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARASensor::StaticClass(), FoundSensor);
+	if (FoundSensor.Num() > 0)
+	{
+		Sensor = Cast<ARASensor>(FoundSensor[0]);
+		UE_LOG(LogTemp, Log, TEXT("RobotArm : 센서 찾았습니다"));
+	}
+
+	Sensor->OnStateChangeSearch.AddDynamic(this, &ARARobotArm::StartSearch);
 
 	StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 	ReturnTransform = StartTransform;
@@ -84,8 +98,16 @@ void ARARobotArm::Tick(float DeltaTime)
 }
 
 // 이 함수 들어오면 Search상태로
-void ARARobotArm::StartRobotAction()
+void ARARobotArm::StartSearch(EProductType SearchType)
 {
+	// 자신과 다른 타입이라면
+	if (Type != SearchType)
+	{
+		return;
+	}
+
+	TargetType = SearchType;
+
 	FSM->ChangeState(ERobotArmState::Search);
 }
 
@@ -103,7 +125,8 @@ void ARARobotArm::SearchState()
 		FString GrabMsg = GrabActor->GetActorLabel();
 		GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Orange, GrabMsg);
 
-		if (GrabActor)
+		// 감지한 액터가 유효하면서 자신이 집어야할 타입이라면
+		if (GrabActor && (GrabActor->GetProductType() == Type))
 		{
 			GrabTransform = GrabActor->GetActorTransform();
 
@@ -116,6 +139,7 @@ void ARARobotArm::SearchState()
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No meshes searched"));
+		FSM->ChangeState(ERobotArmState::Idle);
 	}
 }
 

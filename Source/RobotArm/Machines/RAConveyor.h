@@ -55,7 +55,7 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void ProductSpawn(TSubclassOf<ARATestActor> ProductClass);
+	void ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductClass);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveProduct(AActor* Actor);

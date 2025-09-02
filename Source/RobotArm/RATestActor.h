@@ -31,6 +31,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	UStaticMeshComponent* Mesh;
 
+	// 물품 타입
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
 	EProductType Type;
 

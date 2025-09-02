@@ -25,7 +25,7 @@ void ARASpawnManager::Tick(float DeltaTime)
 
 void ARASpawnManager::SpawnProduct()
 {
-	if (TargetConveyor && ProductClass)
+	if (TargetConveyor)
 	{
 		TargetConveyor->ProductSpawn(ProductClass);
 	}
