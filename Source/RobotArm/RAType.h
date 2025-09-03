@@ -6,6 +6,16 @@
 #include "UObject/NoExportTypes.h"
 #include "RAType.generated.h"
 
+UENUM(BlueprintType)
+enum class ERobotArmState : uint8
+{
+	Idle,
+	Search,
+	Attach,
+	Carry,
+	Dettach,
+	Return
+};
 
 UENUM(BlueprintType)
 enum class EProductType : uint8

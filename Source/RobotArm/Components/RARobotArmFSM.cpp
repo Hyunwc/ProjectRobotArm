@@ -30,6 +30,6 @@ void URARobotArmFSM::ChangeState(ERobotArmState NewState)
 
 	// 변경된 상태 출력
 	FString StateMsg = UEnum::GetValueAsString(CurrentState);
-	GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, StateMsg);
+	//GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, StateMsg);
 }
 

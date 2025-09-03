@@ -4,18 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "RAType.h"
 #include "RARobotArmFSM.generated.h"
-
-UENUM(BlueprintType)
-enum class ERobotArmState : uint8
-{
-	Idle,
-	Search,
-	Attach,
-	Carry,
-	Dettach,
-	Return
-};
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
