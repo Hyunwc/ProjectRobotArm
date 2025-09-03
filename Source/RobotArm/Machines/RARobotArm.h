@@ -14,9 +14,12 @@ class URARobotArmFSM;
 class ARAConveyor;
 class ARATestActor;
 class ARASensor;
+class UWidgetComponent;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnClassficationFinished, EProductType, Type);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRobotArmStateChanged, ERobotArmState, State);
+
 /**
  * 
  */
@@ -101,6 +104,13 @@ public:
 	// 물품 분류 수를 증가시키라고 알리는 델리게이트
 	UPROPERTY(BlueprintAssignable)
 	FOnClassficationFinished OnClassficationFinished;
+
+	// 로봇암의 상태를 표시할 위젯 컴포넌트
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	UWidgetComponent* StateWidget;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnRobotArmStateChanged OnRobotArmStateChanged;
 
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")

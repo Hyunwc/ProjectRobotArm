@@ -8,6 +8,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/RARobotArmFSM.h"
+#include "Components/WidgetComponent.h"
 #include "RAConveyor.h"
 #include "RATestActor.h"
 #include "RASensor.h"
@@ -31,6 +32,9 @@ ARARobotArm::ARARobotArm()
 
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	BoxComp->SetupAttachment(Root);
+
+	StateWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("StateWidget"));
+	StateWidget->SetupAttachment(Root);
 
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 
@@ -97,6 +101,8 @@ void ARARobotArm::Tick(float DeltaTime)
 		ReturnState();
 		break;
 	}
+
+	OnRobotArmStateChanged.Broadcast(FSM->CurrentState);
 }
 
 // 이 함수 들어오면 Search상태로
@@ -115,7 +121,7 @@ void ARARobotArm::StartSearch(EProductType SearchType)
 
 void ARARobotArm::IdleState()
 {
-	GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Cyan, TEXT("명령 대기 중..."));
+	//GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Cyan, TEXT("명령 대기 중..."));
 }
 
 void ARARobotArm::SearchState()
@@ -125,7 +131,7 @@ void ARARobotArm::SearchState()
 		GrabActor = Conveyor->Products[0].TestActor;
 
 		FString GrabMsg = GrabActor->GetActorLabel();
-		GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Orange, GrabMsg);
+		//GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Orange, GrabMsg);
 
 		// 감지한 액터가 유효하면서 자신이 집어야할 타입이라면
 		if (GrabActor && (GrabActor->GetProductType() == Type))
@@ -159,7 +165,7 @@ void ARARobotArm::AttachState()
 	{
 		if (GrabActor)
 		{
-			GEngine->AddOnScreenDebugMessage(8, 2.f, FColor::Red, TEXT("유효"));
+			//GEngine->AddOnScreenDebugMessage(8, 2.f, FColor::Red, TEXT("유효"));
 			GrabTransform = GrabActor->GetActorTransform();
 		
 			// 어태치 이 후에도 액터가 스플라인을 따라가지 않게 하기 위해 배열에서 제거
