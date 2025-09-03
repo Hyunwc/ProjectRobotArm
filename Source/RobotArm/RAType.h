@@ -16,6 +16,14 @@ enum class EProductType : uint8
 	Electronics,
 	Daily
 };
+
+USTRUCT(BlueprintType)
+struct FClassificationMap
+{
+	GENERATED_BODY()
+
+	TMap<EProductType, int32> Data;
+};
 /**
  * 
  */
