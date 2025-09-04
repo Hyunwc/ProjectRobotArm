@@ -15,6 +15,7 @@ class ARAConveyor;
 class ARATestActor;
 class ARASensor;
 class UWidgetComponent;
+//class URARobotArmStateWidget;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnClassficationFinished, EProductType, Type);
