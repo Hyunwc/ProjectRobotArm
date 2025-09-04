@@ -24,7 +24,8 @@ enum class EProductType : uint8
 	Food,
 	Clothes,
 	Electronics,
-	Daily
+	Daily,
+	Other
 };
 
 USTRUCT(BlueprintType)
