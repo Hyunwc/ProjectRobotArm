@@ -13,6 +13,7 @@
 #include "RATestActor.h"
 #include "RASensor.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/RARobotArmStateWidget.h"
 
 ARARobotArm::ARARobotArm()
 {
@@ -34,7 +35,17 @@ ARARobotArm::ARARobotArm()
 	BoxComp->SetupAttachment(Root);
 
 	StateWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("StateWidget"));
-	StateWidget->SetupAttachment(Root);
+	static ConstructorHelpers::FClassFinder<UUserWidget> StateWidgetRef(TEXT("/Game/UI/WBP_RobotArmState.WBP_RobotArmState_C"));
+	if (StateWidgetRef.Class)
+	{
+		StateWidget->SetWidgetClass(StateWidgetRef.Class);
+		StateWidget->SetupAttachment(Root);
+		StateWidget->SetRelativeLocation(FVector(0.f, 0.f, 400.f));
+		StateWidget->SetDrawSize(FVector2D(100.f, 30.f));
+		StateWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		StateWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	
 
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 
@@ -103,6 +114,14 @@ void ARARobotArm::Tick(float DeltaTime)
 	}
 
 	OnRobotArmStateChanged.Broadcast(FSM->CurrentState);
+
+	if (StateWidget)
+	{
+		if (URARobotArmStateWidget* ArmWidget = Cast<URARobotArmStateWidget>(StateWidget->GetUserWidgetObject()))
+		{
+			ArmWidget->UpdateRobotArmState(FSM->CurrentState);
+		}
+	}
 }
 
 // 이 함수 들어오면 Search상태로

@@ -13,5 +13,6 @@ UCLASS()
 class ROBOTARM_API URAUserWidgetBase : public UUserWidget
 {
 	GENERATED_BODY()
+
 	
 };
