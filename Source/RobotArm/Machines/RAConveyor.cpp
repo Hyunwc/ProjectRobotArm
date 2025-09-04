@@ -48,7 +48,8 @@ void ARAConveyor::Tick(float DeltaTime)
 			// 끝까지 가면 삭제
 			if (Prod.Distance > Spline->GetSplineLength())
 			{
-				Prod.TestActor->Destroy();
+				// 풀에 반납 및 현재 컨베이어의 배열에서 삭제
+				OnReturnProduct.Broadcast(Prod.TestActor, Prod.TestActor->GetProductType());
 				Products.RemoveAt(i);
 			}
 		}
