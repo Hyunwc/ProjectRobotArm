@@ -35,6 +35,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
 	EProductType Type;
 
+	
+
 public:
 	UFUNCTION(BlueprintCallable)
 	EProductType GetProductType() { return Type; }

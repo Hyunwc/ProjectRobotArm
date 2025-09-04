@@ -16,6 +16,7 @@ ARAPoolManager::ARAPoolManager()
     PoolSize.Add(EProductType::Food, Size);
     PoolSize.Add(EProductType::Electronics, Size);
     PoolSize.Add(EProductType::Daily, Size);
+    PoolSize.Add(EProductType::Other, Size);
 }
 
 void ARAPoolManager::BeginPlay()

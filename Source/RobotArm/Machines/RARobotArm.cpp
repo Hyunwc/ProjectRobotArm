@@ -127,8 +127,8 @@ void ARARobotArm::Tick(float DeltaTime)
 // 이 함수 들어오면 Search상태로
 void ARARobotArm::StartSearch(EProductType SearchType)
 {
-	// 자신과 다른 타입이라면
-	if (Type != SearchType)
+	// 자신과 다른 타입이라면 
+	if (Type != SearchType || SearchType == EProductType::Other)
 	{
 		return;
 	}
