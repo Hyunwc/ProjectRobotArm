@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Machines/RAMachineBase.h"
+#include "RAType.h"
 #include "RAConveyor.generated.h"
 
 class USplineComponent;
 class ARATestActor;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReturnProduct, ARATestActor*, Actor, EProductType, Type);
 
 USTRUCT(BlueprintType)
 struct FConveyorProduct
@@ -19,7 +22,6 @@ struct FConveyorProduct
 
 	FConveyorProduct() : TestActor(nullptr), Distance(0.f) {}
 };
-
 /**
  * 
  */
@@ -57,6 +59,10 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Conveyor")
 	FTransform DettachTransform;
 
+	// 풀매니저가 등록하여 물품을 풀에 반환하기 위함
+	UPROPERTY(BlueprintAssignable)
+	FOnReturnProduct OnReturnProduct;
+		
 public:
 	UFUNCTION(BlueprintCallable)
 	void ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductClass);

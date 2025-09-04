@@ -14,7 +14,7 @@ void ARASpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ARASpawnManager::SpawnProduct, 3.0f, true);
+	//GetWorldTimerManager().SetTimer(SpawnTimer, this, &ARASpawnManager::SpawnProduct, 3.0f, true);
 }
 
 void ARASpawnManager::Tick(float DeltaTime)
