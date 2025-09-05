@@ -15,6 +15,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "UI/RARobotArmStateWidget.h"
 #include "Components/StaticMeshComponent.h"
+#include "Managers/RADeliveryManager.h"
+#include "Pawn/RADeliveryCart.h"
 
 ARARobotArm::ARARobotArm()
 {
@@ -78,7 +80,14 @@ void ARARobotArm::BeginPlay()
 	StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 	ReturnTransform = StartTransform;
 
-	TargetTransform = TargetConveyor->DettachTransform;
+	if (Type != EProductType::Other)
+	{
+		TargetTransform = TargetConveyor->DettachTransform;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("난 내가 알아서 찾을게"));
+	}
 }
 
 void ARARobotArm::Tick(float DeltaTime)
@@ -127,12 +136,6 @@ void ARARobotArm::Tick(float DeltaTime)
 // 이 함수 들어오면 Search상태로
 void ARARobotArm::StartSearch(EProductType SearchType)
 {
-	if (SearchType == EProductType::Other)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("넌 누구니?"));
-		return;
-	}
-
 	// 자신과 다른 타입이라면 
 	if (Type != SearchType)
 	{
@@ -164,6 +167,7 @@ void ARARobotArm::SearchState()
 			}
 		}
 
+
 		FString GrabMsg = GrabActor->GetActorLabel();
 		//GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Orange, GrabMsg);
 
@@ -171,10 +175,7 @@ void ARARobotArm::SearchState()
 		if (GrabActor && (GrabActor->GetProductType() == Type))
 		{
 			GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
-			//FVector SocketLocation = GrabActor->GetOwnerMesh()->GetSocketLocation(TEXT("GrabSocket"));
-			//DrawDebugSphere(GetWorld(), SocketLocation, 10.f, 12, FColor::Red, false, -1.f, 0, 2.f);
-			//GrabTransform = GrabActor->GetActorTransform();
-
+		
 			Alpha = 0.0f;
 
 			// 물건 좌표 갱신했으니 Attach 상태로
@@ -205,6 +206,26 @@ void ARARobotArm::AttachState()
 			//GEngine->AddOnScreenDebugMessage(8, 2.f, FColor::Red, TEXT("유효"));
 			GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
 			//GrabTransform = GrabActor->GetActorTransform();
+
+			// 그랩액터가 Other타입이면
+			if (GrabActor->GetProductType() == EProductType::Other)
+			{
+				// 물건 집어서
+				GrabActor->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
+
+				MoveToTransform(GrabTransform, Delta);
+
+				// 카트에 넣고
+				ARADeliveryCart* Cart = DeliveryManager->GetNextCart();
+				if (!Cart->CartIsFull())
+				{
+					Cart->AddProduct(GrabActor);
+				}
+
+				Alpha = 0.0f;
+				
+				FSM->ChangeState(ERobotArmState::Carry);
+			}
 		
 			// 어태치 이 후에도 액터가 스플라인을 따라가지 않게 하기 위해 배열에서 제거
 			if (Conveyor)
@@ -246,10 +267,12 @@ void ARARobotArm::DettachState()
 		// 메시 분리
 		GrabActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-		// 타겟 컨베이어에서 물품이 다시 이동할 수 있도록 컨베이어의 배열에 더해줌.
-		TargetConveyor->AddProduct(GrabActor);
-
-		OnClassficationFinished.Broadcast(GrabActor->GetProductType());
+		if (Type != EProductType::Other)
+		{
+			// 타겟 컨베이어에서 물품이 다시 이동할 수 있도록 컨베이어의 배열에 더해줌.
+			TargetConveyor->AddProduct(GrabActor);
+			OnClassficationFinished.Broadcast(GrabActor->GetProductType());
+		}
 
 		GrabActor = nullptr;
 

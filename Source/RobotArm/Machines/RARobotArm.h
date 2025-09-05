@@ -15,6 +15,7 @@ class ARAConveyor;
 class ARATestActor;
 class ARASensor;
 class UWidgetComponent;
+class ARADeliveryManager;
 //class URARobotArmStateWidget;
 
 
@@ -112,6 +113,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnRobotArmStateChanged OnRobotArmStateChanged;
+
+	// 임시로 참조할 딜리버리매니저
+	UPROPERTY(EditInstanceOnly, Category = "Delivery")
+	ARADeliveryManager* DeliveryManager;
 
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")
