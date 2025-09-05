@@ -28,6 +28,16 @@ enum class EProductType : uint8
 	Other
 };
 
+UENUM(BlueprintType)
+enum class ECartState : uint8
+{
+	Wait,
+	Loading,
+	Move,
+	Return,
+	Back
+};
+
 USTRUCT(BlueprintType)
 struct FClassificationMap
 {

@@ -16,7 +16,7 @@ ARAPoolManager::ARAPoolManager()
     PoolSize.Add(EProductType::Food, Size);
     PoolSize.Add(EProductType::Electronics, Size);
     PoolSize.Add(EProductType::Daily, Size);
-    PoolSize.Add(EProductType::Other, Size);
+    PoolSize.Add(EProductType::Other, 20);
 }
 
 void ARAPoolManager::BeginPlay()
@@ -84,7 +84,7 @@ void ARAPoolManager::SpawnPool()
     //int32 RandomIndex = 1 + FMath::RandHelper(EnumPtr->NumEnums() - 2);
     int32 RandomIndex = FMath::RandRange(1, static_cast<int32>(EnumPtr->GetMaxEnumValue() - 1));
 
-    UE_LOG(LogTemp, Warning, TEXT("PoolManager: 랜덤값 %d"), RandomIndex);
+    //UE_LOG(LogTemp, Warning, TEXT("PoolManager: 랜덤값 %d"), RandomIndex);
 
     EProductType RandomType = static_cast<EProductType>(RandomIndex);
 
@@ -118,13 +118,13 @@ void ARAPoolManager::ReturnPooling(ARATestActor* Actor, EProductType Type)
         return;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("PoolManager: 지금부터 반납을 시작하겠습니다"));
+    //UE_LOG(LogTemp, Warning, TEXT("PoolManager: 지금부터 반납을 시작하겠습니다"));
 
     if (FPoolMapWrapper* Wrapper = PoolMap.Find(Type))
     {
         Actor->SetActorHiddenInGame(true);
         Wrapper->PoolMapArray.Add(Actor);
     }
-    UE_LOG(LogTemp, Warning, TEXT("PoolManager: 반납을 실패해습니다만"));
+    //UE_LOG(LogTemp, Warning, TEXT("PoolManager: 반납을 실패해습니다만"));
 }
 
