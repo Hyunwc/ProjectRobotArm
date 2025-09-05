@@ -30,6 +30,12 @@ void ARASensor::OnSensorOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	ARATestActor* Product = Cast<ARATestActor>(OtherActor);
 	EProductType ProductType = Product->GetProductType();
 
+	//if (ProductType == EProductType::Other)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("센서 : 얘 우리 소속 아니에요"));
+	//	return;
+	//}
+
 	//FString Mgs = UEnum::GetValueAsString(ProductType);
 	//GEngine->AddOnScreenDebugMessage(10, 3.f, FColor::Emerald, UEnum::GetValueAsString(ProductType));
 

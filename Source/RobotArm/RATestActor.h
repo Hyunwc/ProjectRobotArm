@@ -35,9 +35,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
 	EProductType Type;
 
-	
-
 public:
 	UFUNCTION(BlueprintCallable)
 	EProductType GetProductType() { return Type; }
+
+	UFUNCTION(BlueprintCallable)
+	UStaticMeshComponent* GetOwnerMesh() { return Mesh; }
 };

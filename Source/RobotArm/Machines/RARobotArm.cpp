@@ -14,6 +14,7 @@
 #include "RASensor.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/RARobotArmStateWidget.h"
+#include "Components/StaticMeshComponent.h"
 
 ARARobotArm::ARARobotArm()
 {
@@ -46,7 +47,6 @@ ARARobotArm::ARARobotArm()
 		StateWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	
-
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 
 	Type = EProductType::Default;
@@ -127,8 +127,14 @@ void ARARobotArm::Tick(float DeltaTime)
 // 이 함수 들어오면 Search상태로
 void ARARobotArm::StartSearch(EProductType SearchType)
 {
+	if (SearchType == EProductType::Other)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("넌 누구니?"));
+		return;
+	}
+
 	// 자신과 다른 타입이라면 
-	if (Type != SearchType || SearchType == EProductType::Other)
+	if (Type != SearchType)
 	{
 		return;
 	}
@@ -147,7 +153,16 @@ void ARARobotArm::SearchState()
 {
 	if (Conveyor->Products.Num() > 0)
 	{
-		GrabActor = Conveyor->Products[0].TestActor;
+		//GrabActor = Conveyor->Products[0].TestActor;
+
+		for (const FConveyorProduct& Prod : Conveyor->Products)
+		{
+			if (Prod.TestActor->GetProductType() == Type)
+			{
+				GrabActor = Prod.TestActor;
+				break;
+			}
+		}
 
 		FString GrabMsg = GrabActor->GetActorLabel();
 		//GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Orange, GrabMsg);
@@ -155,7 +170,10 @@ void ARARobotArm::SearchState()
 		// 감지한 액터가 유효하면서 자신이 집어야할 타입이라면
 		if (GrabActor && (GrabActor->GetProductType() == Type))
 		{
-			GrabTransform = GrabActor->GetActorTransform();
+			GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
+			//FVector SocketLocation = GrabActor->GetOwnerMesh()->GetSocketLocation(TEXT("GrabSocket"));
+			//DrawDebugSphere(GetWorld(), SocketLocation, 10.f, 12, FColor::Red, false, -1.f, 0, 2.f);
+			//GrabTransform = GrabActor->GetActorTransform();
 
 			Alpha = 0.0f;
 
@@ -185,7 +203,8 @@ void ARARobotArm::AttachState()
 		if (GrabActor)
 		{
 			//GEngine->AddOnScreenDebugMessage(8, 2.f, FColor::Red, TEXT("유효"));
-			GrabTransform = GrabActor->GetActorTransform();
+			GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
+			//GrabTransform = GrabActor->GetActorTransform();
 		
 			// 어태치 이 후에도 액터가 스플라인을 따라가지 않게 하기 위해 배열에서 제거
 			if (Conveyor)
