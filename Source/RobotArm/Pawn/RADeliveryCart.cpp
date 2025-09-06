@@ -4,6 +4,8 @@
 #include "Pawn/RADeliveryCart.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
+#include "Managers/RAPoolManager.h"
+#include "RATestActor.h"
 //#include "AIController.h"
 
 
@@ -17,7 +19,7 @@ ARADeliveryCart::ARADeliveryCart()
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
 	
 	ProductCapacity = 0;
-	MaxCapacity = 5;
+	MaxCapacity = 2;
 	CartState = ECartState::Wait;
 }
 
@@ -51,7 +53,7 @@ void ARADeliveryCart::AddProduct(AActor* Product)
 		return;
 	}
 
-	Products.Add(Product);
+	Products.Add(Cast<ARATestActor>(Product));
 	// 물건 임시로 사라져 보이게 
 	Product->SetActorHiddenInGame(true);
 	ProductCapacity++;
@@ -132,8 +134,6 @@ void ARADeliveryCart::ReturnProducts()
 	GetWorldTimerManager().SetTimer(ReturnTimerHandle, this, &ARADeliveryCart::HandleReturnTick, 1.f, true);
 }
 
-
-
 AAIController* ARADeliveryCart::GetAICon() const
 {
 	return Cast<AAIController>(GetController());
@@ -146,16 +146,13 @@ void ARADeliveryCart::HandleReturnTick()
 		GetWorldTimerManager().ClearTimer(ReturnTimerHandle);
 
 		ProductCapacity = 0;
+		UE_LOG(LogTemp, Warning, TEXT("Cart : 반환 후 용량: %d, 배열 사이즈: %d"), ProductCapacity, Products.Num());
 		OnCartReturned.Broadcast(this); // 반환 끝을 알림
 		return;
 	}
 
 	// TODO : 풀매니저에게 반납하는 코드를 작성합니다.
-	AActor* Product = Products.Pop();
-	if (Product)
-	{
-		Product->Destroy();
-		ProductCapacity--;
-	}
+	OnReturnCartProduct.Broadcast(Products.Pop(), EProductType::Other);
+	ProductCapacity--;
 }
 

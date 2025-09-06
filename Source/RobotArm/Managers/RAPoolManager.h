@@ -9,6 +9,7 @@
 #include "RAPoolManager.generated.h"
 
 class ARAConveyor;
+class ARADeliveryCart;
 //class ARATestActor;
 
 USTRUCT(BlueprintType)
@@ -52,6 +53,9 @@ public:
 
 	UPROPERTY(EditInstanceOnly, Category = "Conveyor")
 	ARAConveyor* MainConveyor;
+
+	UPROPERTY(EditAnywhere, Category = "Cart")
+	TArray<ARADeliveryCart*> Carts;
 
 	FTimerHandle SpawnTimer;
 

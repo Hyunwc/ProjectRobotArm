@@ -3,6 +3,7 @@
 
 #include "Managers/RAPoolManager.h"
 #include "Machines/RAConveyor.h"
+#include "Pawn/RADeliveryCart.h"
 #include "EngineUtils.h"
 //#include "RATestActor.h"
 
@@ -16,7 +17,7 @@ ARAPoolManager::ARAPoolManager()
     PoolSize.Add(EProductType::Food, Size);
     PoolSize.Add(EProductType::Electronics, Size);
     PoolSize.Add(EProductType::Daily, Size);
-    PoolSize.Add(EProductType::Other, 20);
+    PoolSize.Add(EProductType::Other, Size);
 }
 
 void ARAPoolManager::BeginPlay()
@@ -33,6 +34,17 @@ void ARAPoolManager::BeginPlay()
         {
             Conveyor->OnReturnProduct.AddDynamic(this, &ARAPoolManager::ReturnPooling);
             Conveyors.Add(Conveyor);
+        }
+    }
+
+    for (TActorIterator<ARADeliveryCart> It(GetWorld()); It; ++It)
+    {
+        ARADeliveryCart* Cart = *It;
+
+        if (Cart)
+        {
+            Cart->OnReturnCartProduct.AddDynamic(this, &ARAPoolManager::ReturnPooling);
+            Carts.Add(Cart);
         }
     }
 
@@ -118,13 +130,10 @@ void ARAPoolManager::ReturnPooling(ARATestActor* Actor, EProductType Type)
         return;
     }
 
-    //UE_LOG(LogTemp, Warning, TEXT("PoolManager: 지금부터 반납을 시작하겠습니다"));
-
     if (FPoolMapWrapper* Wrapper = PoolMap.Find(Type))
     {
         Actor->SetActorHiddenInGame(true);
         Wrapper->PoolMapArray.Add(Actor);
     }
-    //UE_LOG(LogTemp, Warning, TEXT("PoolManager: 반납을 실패해습니다만"));
 }
 
