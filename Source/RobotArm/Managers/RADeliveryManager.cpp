@@ -113,11 +113,12 @@ void ARADeliveryManager::HandleCartReturned(ARADeliveryCart* Cart)
 	UE_LOG(LogTemp, Warning, TEXT("DeliveryManager : 자 돌아가보실까!"));
 	// 큐 맨 뒤로 보내고 대기장소로 복귀
 	RecycleCart(Cart);
+	Cart->SetState(ECartState::Wait);
 }
 
 void ARADeliveryManager::HandleCartCombackCompleted(ARADeliveryCart* Cart)
 {
 	UE_LOG(LogTemp, Warning, TEXT("DeliveryManager : 카트 %s 복귀 완료, 대기 상태로 전환"), *Cart->GetName());
-	Cart->SetState(ECartState::Wait);
+	//Cart->SetState(ECartState::Wait);
 }
 

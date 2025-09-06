@@ -13,8 +13,10 @@
 class UStaticMeshComponent;
 class UFloatingPawnMovement;
 class AAIController;
+class ARATestActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCartEventSignature, ARADeliveryCart* , Cart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReturnCartProduct, ARATestActor*, Actor, EProductType, Type);
 
 
 UCLASS()
@@ -45,7 +47,7 @@ protected:
 
 	// 물품을 담을 배열
 	UPROPERTY(VisibleAnywhere, Category = "Product")
-	TArray<AActor*> Products;
+	TArray<ARATestActor*> Products;
 
 	// 현재 용량
 	UPROPERTY(VisibleAnywhere, Category = "Product")
@@ -74,6 +76,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FCartEventSignature OnCartCombacked; // 복귀 완료했을 때
+
+	UPROPERTY(BlueprintAssignable)
+	FOnReturnCartProduct OnReturnCartProduct; // 반납할 때 풀매니저 보고 알아서 가져가게.
 
 public:
 	// 상태 관리
