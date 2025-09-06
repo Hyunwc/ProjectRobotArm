@@ -43,9 +43,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Cart")
 	FVector PrevCartLocation;
 
-	UPROPERTY(EditInstanceOnly, Category = "Cart")
-	TArray<FVector> WaitingLocations;
-
 public:
 	// 큐에서 제일 앞의 카트 반환
 	UFUNCTION()
@@ -55,10 +52,6 @@ public:
 	UFUNCTION()
 	void RecycleCart(ARADeliveryCart* Cart);
 
-	// 명령을 내릴 함수들
-	void DispatchLoadingCart(); // 대기 -> 적재
-	void DispatchReturnCart(); // 이동 -> 반납
-
 	UFUNCTION()
 	void HandleCartCapacityFull(ARADeliveryCart* Cart);
 
@@ -67,5 +60,8 @@ public:
 
 	UFUNCTION()
 	void HandleCartReturned(ARADeliveryCart* Cart);
+
+	UFUNCTION()
+	void HandleCartCombackCompleted(ARADeliveryCart* Cart);
 
 };

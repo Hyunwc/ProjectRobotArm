@@ -4,7 +4,8 @@
 #include "Pawn/RADeliveryCart.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
-#include "AIController.h"
+//#include "AIController.h"
+
 
 ARADeliveryCart::ARADeliveryCart()
 {
@@ -72,7 +73,30 @@ void ARADeliveryCart::MoveToLocation(const FVector& NewLocation)
 {
 	if (AAIController* AICon = GetAICon())
 	{
+		//FNavPathSharedPtr NavPath;
 		AICon->MoveToLocation(NewLocation);
+
+		if (UPathFollowingComponent* PathComp = AICon->GetPathFollowingComponent())
+		{
+			PathComp->OnRequestFinished.AddUObject(this, &ARADeliveryCart::HandleMoveCompleted);
+		}
+		//// 도착 이벤트 바인딩
+		//AICon->ReceiveMoveCompleted.AddDynamic(this, &ARADeliveryCart::HandleMoveCompleted);
+	}
+}
+
+void ARADeliveryCart::BackToLocation(const FVector& NewLocation)
+{
+	if (AAIController* AICon = GetAICon())
+	{
+		CachedCombackLocation = NewLocation;
+		const float AcceptanceRadius = 5.0f;
+		AICon->MoveToLocation(NewLocation, AcceptanceRadius);
+
+		if (UPathFollowingComponent* PathComp = AICon->GetPathFollowingComponent())
+		{
+			PathComp->OnRequestFinished.AddUObject(this, &ARADeliveryCart::HandleCombackCompleted);
+		}
 	}
 }
 
@@ -82,33 +106,33 @@ void ARADeliveryCart::OnArrived()
 	OnCartArrived.Broadcast(this);
 }
 
+void ARADeliveryCart::HandleMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+	if (Result.Code == EPathFollowingResult::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cart %s : 도착성공"), *GetName());
+		OnCartArrived.Broadcast(this);
+	}
+}
+
+void ARADeliveryCart::HandleCombackCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+	if (Result.Code == EPathFollowingResult::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cart %s : 복귀 성공! 다시 명령 대기하겠습니다"), *GetName());
+		SetActorLocation(CachedCombackLocation);
+		OnCartCombacked.Broadcast(this);
+	}
+}
+
 void ARADeliveryCart::ReturnProducts()
 {
 	SetState(ECartState::Return);
 
 	GetWorldTimerManager().SetTimer(ReturnTimerHandle, this, &ARADeliveryCart::HandleReturnTick, 1.f, true);
-
-	//for (AActor* Product : Products)
-	//{
-	//	if (Product)
-	//	{
-	//		Product->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	//		Product->Destroy();
-	//	}
-	//}
-	//
-	//Products.Empty();
 }
 
-void ARADeliveryCart::BackToLocation(const FVector& NewLocation)
-{
-	if (AAIController* AICon = GetAICon())
-	{
-		AICon->MoveToLocation(NewLocation);
-	}
 
-	// 도착 시점에 OnCartBacked.Broadcast 호출은 매니저가 트리거 해줘야함
-}
 
 AAIController* ARADeliveryCart::GetAICon() const
 {
