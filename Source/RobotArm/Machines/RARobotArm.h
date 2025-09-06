@@ -118,6 +118,10 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "Delivery")
 	ARADeliveryManager* DeliveryManager;
 
+	// 집어야할 액터를 관리할 큐
+	UPROPERTY(VisibleAnywhere, Category = "RobotArm")
+	TArray<ARATestActor*> ProductQueue;
+
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")
 	void StartSearch(EProductType SearchType);
@@ -133,9 +137,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MoveToTransform(const FTransform& Destination, float DeltaTime);
 
+	UFUNCTION()
+	void HandleProduct(EProductType SearchType, ARATestActor* Actor);
+
+	UFUNCTION()
+	void OnRobotArmOverlapBegin(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 private:
 	float Alpha;
 
 	float Delta;
+
+	bool bReadyToGrab;
 
 };

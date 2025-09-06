@@ -44,6 +44,7 @@ void ARAConveyor::Tick(float DeltaTime)
 			Prod.Distance += MoveSpeed * DeltaTime;
 			FVector NewLocation = Spline->GetLocationAtDistanceAlongSpline(Prod.Distance, ESplineCoordinateSpace::World);
 			Prod.TestActor->SetActorLocation(NewLocation);
+			Prod.TestActor->SetActorRotation(FRotator::ZeroRotator);
 
 			// 끝까지 가면 삭제
 			if (Prod.Distance > Spline->GetSplineLength())
