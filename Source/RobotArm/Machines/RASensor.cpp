@@ -3,7 +3,7 @@
 
 #include "Machines/RASensor.h"
 #include "Components/BoxComponent.h"
-#include "RATestActor.h"
+//#include "RATestActor.h"
 
 ARASensor::ARASensor()
 {
@@ -30,6 +30,8 @@ void ARASensor::OnSensorOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	ARATestActor* Product = Cast<ARATestActor>(OtherActor);
 	EProductType ProductType = Product->GetProductType();
 
+	OnProductDetected.Broadcast(Product->GetProductType(), Product);
+
 	//if (ProductType == EProductType::Other)
 	//{
 	//	UE_LOG(LogTemp, Warning, TEXT("센서 : 얘 우리 소속 아니에요"));
@@ -40,7 +42,7 @@ void ARASensor::OnSensorOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	//GEngine->AddOnScreenDebugMessage(10, 3.f, FColor::Emerald, UEnum::GetValueAsString(ProductType));
 
 	// 해당 물품을 스캔했다고 알림
-	OnStateChangeSearch.Broadcast(ProductType);
+	//OnStateChangeSearch.Broadcast(ProductType);
 }
 
 void ARASensor::OnSensorZoneOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

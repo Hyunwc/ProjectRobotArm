@@ -52,6 +52,8 @@ ARARobotArm::ARARobotArm()
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 
 	Type = EProductType::Default;
+
+	bReadyToGrab = false;
 }
 
 void ARARobotArm::BeginPlay()
@@ -75,7 +77,10 @@ void ARARobotArm::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("RobotArm : 센서 찾았습니다"));
 	}
 
+	//BoxComp->OnComponentBeginOverlap.AddDynamic(this, &ARARobotArm::OnRobotArmOverlapBegin);
+
 	Sensor->OnStateChangeSearch.AddDynamic(this, &ARARobotArm::StartSearch);
+	Sensor->OnProductDetected.AddDynamic(this, &ARARobotArm::HandleProduct);
 
 	StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 	ReturnTransform = StartTransform;
@@ -143,8 +148,8 @@ void ARARobotArm::StartSearch(EProductType SearchType)
 	}
 
 	TargetType = SearchType;
-
-	FSM->ChangeState(ERobotArmState::Search);
+	bReadyToGrab = true;
+	//FSM->ChangeState(ERobotArmState::Search);
 }
 
 void ARARobotArm::IdleState()
@@ -154,37 +159,33 @@ void ARARobotArm::IdleState()
 
 void ARARobotArm::SearchState()
 {
-	if (Conveyor->Products.Num() > 0)
+	if (ProductQueue.Num() > 0)
 	{
-		//GrabActor = Conveyor->Products[0].TestActor;
+		ARATestActor* Product = ProductQueue[0];
 
-		for (const FConveyorProduct& Prod : Conveyor->Products)
+		if (IsValid(Product) && BoxComp->IsOverlappingActor(Product))
 		{
-			if (Prod.TestActor->GetProductType() == Type)
-			{
-				GrabActor = Prod.TestActor;
-				break;
-			}
-		}
+			GrabActor = Product;
 
+			// 큐에서 처리할 물건 제거
+			ProductQueue.RemoveAt(0);
 
-		FString GrabMsg = GrabActor->GetActorLabel();
-		//GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Orange, GrabMsg);
-
-		// 감지한 액터가 유효하면서 자신이 집어야할 타입이라면
-		if (GrabActor && (GrabActor->GetProductType() == Type))
-		{
 			GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
-		
-			Alpha = 0.0f;
 
-			// 물건 좌표 갱신했으니 Attach 상태로
+			Alpha = 0.0f;
 			FSM->ChangeState(ERobotArmState::Attach);
+		}
+		else
+		{
+			if (!IsValid(Product) || BoxComp->IsOverlappingActor(Product))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("로봇암 %s: 물건이 유효하지 않거나 범위를 벗어남 "), *GetName());
+				ProductQueue.RemoveAt(0);
+			}
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No meshes searched"));
 		FSM->ChangeState(ERobotArmState::Idle);
 	}
 }
@@ -297,7 +298,16 @@ void ARARobotArm::ReturnState()
 	{
 		Alpha = 0.0f;
 
-		FSM->ChangeState(ERobotArmState::Idle);
+		// 복귀 완료 후 큐에 물건이 남아있다면?
+		if (ProductQueue.Num() > 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("로봇암 %s : 아직 %d개나 남았네? 이런!"), *GetName(), ProductQueue.Num());
+			FSM->ChangeState(ERobotArmState::Search);
+		}
+		else
+		{
+			FSM->ChangeState(ERobotArmState::Idle);
+		}
 	}
 }
 
@@ -313,4 +323,50 @@ void ARARobotArm::MoveToTransform(const FTransform& Destination, float DeltaTime
 	FTransform NewTransform(R, L, S);
 
 	ControlRigComponent->SetControlTransform(EndEffectorName, NewTransform, EControlRigComponentSpace::WorldSpace);
+}
+
+void ARARobotArm::HandleProduct(EProductType SearchType, ARATestActor* Actor)
+{
+	// 자신의 타입과 다르다면
+	if (SearchType != Type)
+	{
+		return;
+	}
+
+	if (!ProductQueue.Contains(Actor))
+	{
+		ProductQueue.Add(Actor);
+		UE_LOG(LogTemp, Warning, TEXT("로봇암 %s : %s 물건이 큐에 추가됨, 현재 큐 크기: %d"),*GetName(), *Actor->GetName(), ProductQueue.Num());
+	}
+
+	if (FSM->CurrentState == ERobotArmState::Idle)
+	{
+		FSM->ChangeState(ERobotArmState::Search);
+	}
+}
+
+void ARARobotArm::OnRobotArmOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!bReadyToGrab || GrabActor || !IsValid(OtherActor))
+	{
+		return;
+	}
+
+	ARATestActor* Product = Cast<ARATestActor>(OtherActor);
+	if (!Product)
+	{
+		return;
+	}
+
+	if (Product->GetProductType() == TargetType)
+	{
+		GrabActor = Product;
+		GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
+
+		Alpha = 0.0f;
+
+		FSM->ChangeState(ERobotArmState::Attach);
+
+		bReadyToGrab = false;
+	}
 }
