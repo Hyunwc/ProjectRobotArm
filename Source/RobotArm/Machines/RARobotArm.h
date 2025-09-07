@@ -89,7 +89,7 @@ public:
 
 	// 자신이 집어야할 물품의 타입
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Type")
-	EProductType Type;
+	EProductType MyType;
 
 	// 목표 타입
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Type")

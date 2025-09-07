@@ -34,16 +34,7 @@ void ARADeliveryManager::BeginPlay()
 		}
 	}
 
-	if (CartQueue.Num() > 0)
-	{
-		ARADeliveryCart* FrontCart = CartQueue[0];
-
-		if (FrontCart->GetState() == ECartState::Wait)
-		{
-			FrontCart->MoveToLocation(LoadingLocation);
-			FrontCart->SetState(ECartState::Loading);
-		}
-	}
+	GetWorldTimerManager().SetTimer(FirstCartTimer, this, &ARADeliveryManager::InitializeFirstCart, 1.f, false);
 }
 
 void ARADeliveryManager::Tick(float DeltaTime)
@@ -60,6 +51,23 @@ ARADeliveryCart* ARADeliveryManager::GetNextCart()
 	}
 
 	return nullptr;
+}
+
+void ARADeliveryManager::InitializeFirstCart()
+{
+	if (CartQueue.Num() > 0)
+	{
+		ARADeliveryCart* FrontCart = CartQueue[0];
+
+		if (FrontCart->GetState() == ECartState::Wait)
+		{
+			FrontCart->SetLoadingLocation(LoadingLocation);
+			FrontCart->MoveToLocation(LoadingLocation);
+			FrontCart->SetState(ECartState::Loading);
+		}
+	}
+
+	GetWorldTimerManager().ClearTimer(FirstCartTimer);
 }
 
 void ARADeliveryManager::RecycleCart(ARADeliveryCart* Cart)
@@ -90,7 +98,8 @@ void ARADeliveryManager::HandleCartCapacityFull(ARADeliveryCart* Cart)
 			UE_LOG(LogTemp, Warning, TEXT("DeliveryManager : 카드 %s 적재 장소로 이동 "), *NextCart->GetName());
 			// 복귀 장소 캐시
 			PrevCartLocation = NextCart->GetActorLocation();
-			DrawDebugSphere(GetWorld(), PrevCartLocation, 50.f, 12, FColor::Green);
+			//DrawDebugSphere(GetWorld(), PrevCartLocation, 50.f, 12, FColor::Green);
+			NextCart->SetLoadingLocation(LoadingLocation);
 			NextCart->MoveToLocation(LoadingLocation);
 			NextCart->SetState(ECartState::Loading);
 		}

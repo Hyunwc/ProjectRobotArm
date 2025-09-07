@@ -3,6 +3,7 @@
 
 #include "Managers/RAFactoryManager.h"
 #include "Machines/RARobotArm.h"
+#include "Pawn/RADeliveryCart.h"
 #include "EngineUtils.h"
 
 ARAFactoryManager::ARAFactoryManager()
@@ -31,6 +32,17 @@ void ARAFactoryManager::BeginPlay()
 			RobotArms.Add(Arm);
 		}
 	}
+
+	for (TActorIterator<ARADeliveryCart> It(GetWorld()); It; ++It)
+	{
+		ARADeliveryCart* Cart = *It;
+
+		if (Cart)
+		{
+			Cart->OnCartStatusChanged.AddDynamic(this, &ARAFactoryManager::UpdateCarStatusData);
+			Carts.Add(Cart);
+		}
+	}
 }
 
 void ARAFactoryManager::Tick(float DeltaTime)
@@ -47,5 +59,38 @@ void ARAFactoryManager::RecordClassificationData(EProductType Type)
 	}
 
 	OnUpdateClassification.Broadcast(ClassificationMap);
+}
+
+void ARAFactoryManager::UpdateCarStatusData(ARADeliveryCart* Cart, ECartState NewState)
+{
+	UE_LOG(LogTemp, Warning, TEXT("팩토리매니저 : 상태를 넘겨줄게요"));
+	// 카트 상태를 텍스트로 변환하는 작업
+	FText StateText;
+
+	switch (NewState)
+	{
+	case ECartState::Wait:
+		StateText = FText::FromString("Wait..");
+		break;
+	case ECartState::Loading:
+		StateText = FText::FromString("Loading..");
+		break;
+	case ECartState::Move:
+		StateText = FText::FromString("Move..");
+		break;
+	case ECartState::Return:
+		StateText = FText::FromString("Return..");
+		break;
+	case ECartState::Back:
+		StateText = FText::FromString("Comback..");
+		break;
+	default:
+		StateText = FText::FromString("Unknown..");
+		break;
+	}
+
+	CartStateMap.Data.Add(Cart->GetCartName(), StateText);
+
+	OnUpdateCartStatus.Broadcast(CartStateMap);
 }
 

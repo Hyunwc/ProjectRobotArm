@@ -45,6 +45,14 @@ struct FClassificationMap
 
 	TMap<EProductType, int32> Data;
 };
+
+USTRUCT(BlueprintType)
+struct FCartStateMap
+{
+	GENERATED_BODY()
+
+	TMap<FString, FText> Data;
+};
 /**
  * 
  */
