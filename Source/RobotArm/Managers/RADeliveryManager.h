@@ -43,10 +43,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Cart")
 	FVector PrevCartLocation;
 
+private:
+	FTimerHandle FirstCartTimer;
+
 public:
 	// 큐에서 제일 앞의 카트 반환
 	UFUNCTION()
 	ARADeliveryCart* GetNextCart();
+
+	UFUNCTION()
+	void InitializeFirstCart();
 
 	// 작업 완료한 카트를 큐 맨뒤로 이동
 	UFUNCTION()

@@ -51,7 +51,7 @@ ARARobotArm::ARARobotArm()
 	
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 
-	Type = EProductType::Default;
+	MyType = EProductType::Default;
 
 	bReadyToGrab = false;
 }
@@ -85,8 +85,9 @@ void ARARobotArm::BeginPlay()
 	StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 	ReturnTransform = StartTransform;
 
-	if (Type != EProductType::Other)
+	if (MyType != EProductType::Other)
 	{
+		// 목표지점 설정
 		TargetTransform = TargetConveyor->DettachTransform;
 	}
 	else
@@ -142,7 +143,7 @@ void ARARobotArm::Tick(float DeltaTime)
 void ARARobotArm::StartSearch(EProductType SearchType)
 {
 	// 자신과 다른 타입이라면 
-	if (Type != SearchType)
+	if (MyType != SearchType)
 	{
 		return;
 	}
@@ -218,6 +219,8 @@ void ARARobotArm::AttachState()
 
 				// 카트에 넣고
 				ARADeliveryCart* Cart = DeliveryManager->GetNextCart();
+
+				TargetTransform = FTransform(FRotator::ZeroRotator, Cart->GetLoadingLocation(), FVector(1.f, 1.f, 1.f));
 				if (!Cart->CartIsFull())
 				{
 					Cart->AddProduct(GrabActor);
@@ -268,11 +271,16 @@ void ARARobotArm::DettachState()
 		// 메시 분리
 		GrabActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-		if (Type != EProductType::Other)
+		if (MyType != EProductType::Other)
 		{
 			// 타겟 컨베이어에서 물품이 다시 이동할 수 있도록 컨베이어의 배열에 더해줌.
 			TargetConveyor->AddProduct(GrabActor);
 			OnClassficationFinished.Broadcast(GrabActor->GetProductType());
+		}
+
+		if (GrabActor->GetProductType() == EProductType::Other)
+		{
+			GrabActor->SetActorHiddenInGame(true);
 		}
 
 		GrabActor = nullptr;
@@ -328,7 +336,7 @@ void ARARobotArm::MoveToTransform(const FTransform& Destination, float DeltaTime
 void ARARobotArm::HandleProduct(EProductType SearchType, ARATestActor* Actor)
 {
 	// 자신의 타입과 다르다면
-	if (SearchType != Type)
+	if (SearchType != MyType)
 	{
 		return;
 	}

@@ -17,7 +17,7 @@ class ARATestActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCartEventSignature, ARADeliveryCart* , Cart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReturnCartProduct, ARATestActor*, Actor, EProductType, Type);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCartStatusChanged, ARADeliveryCart*, Cart, ECartState, NewState);
 
 UCLASS()
 class ROBOTARM_API ARADeliveryCart : public APawn
@@ -60,6 +60,13 @@ protected:
 	// 반납할 때 사용할 타이머(즉시 반납보다는 시간이 지나면서 반납하게 하기 위함
 	FTimerHandle ReturnTimerHandle; 
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Cart")
+	FString CartName;
+
+	// 로봇암이 이 위치를 알 수 있게 캐시
+	UPROPERTY(VisibleAnywhere, Category = "Target")
+	FVector CacheLoadingLocation;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Cart")
 	FVector CachedCombackLocation;
@@ -79,6 +86,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnReturnCartProduct OnReturnCartProduct; // 반납할 때 풀매니저 보고 알아서 가져가게.
+
+	UPROPERTY(BlueprintAssignable)
+	FOnCartStatusChanged OnCartStatusChanged; // 카트의 상태가 변경됐음을 구독자에게 알림
 
 public:
 	// 상태 관리
@@ -111,11 +121,19 @@ public:
 	UFUNCTION()
 	void ReturnProducts();
 
-	
+	UFUNCTION()
+	FString GetCartName() { return CartName; }
+
 	// 카트가 꽉찼는지 검사하는
 	UFUNCTION()
 	bool CartIsFull() const { return (ProductCapacity == MaxCapacity); }
 
 	AAIController* GetAICon() const;
 	void HandleReturnTick(); // 타이머로 반환
+
+	UFUNCTION()
+	void SetLoadingLocation(const FVector& Location);
+
+	UFUNCTION()
+	FVector GetLoadingLocation() { return CacheLoadingLocation; }
 };

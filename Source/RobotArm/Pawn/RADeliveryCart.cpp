@@ -19,7 +19,7 @@ ARADeliveryCart::ARADeliveryCart()
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
 	
 	ProductCapacity = 0;
-	MaxCapacity = 2;
+	MaxCapacity = 5;
 	CartState = ECartState::Wait;
 }
 
@@ -44,6 +44,10 @@ void ARADeliveryCart::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 void ARADeliveryCart::SetState(ECartState NewState)
 {
 	CartState = NewState;
+
+	UE_LOG(LogTemp, Warning, TEXT("카트 : 상태를 넘겨줄게요"));
+
+	OnCartStatusChanged.Broadcast(this, NewState);
 }
 
 void ARADeliveryCart::AddProduct(AActor* Product)
@@ -55,7 +59,7 @@ void ARADeliveryCart::AddProduct(AActor* Product)
 
 	Products.Add(Cast<ARATestActor>(Product));
 	// 물건 임시로 사라져 보이게 
-	Product->SetActorHiddenInGame(true);
+	//Product->SetActorHiddenInGame(true);
 	ProductCapacity++;
 
 	if (ProductCapacity >= MaxCapacity)
@@ -63,12 +67,6 @@ void ARADeliveryCart::AddProduct(AActor* Product)
 		UE_LOG(LogTemp, Warning, TEXT("자 이제 나를 이동하라고 명령해줘!"));
 		OnCartFull.Broadcast(this); // Manager가 듣고 이동해라고 명령할 거임
 	}
-
-	//if (ProductCapacity >= MaxCapacity)
-	//{
-	//	MoveToLocation();
-	//}
-	//Product->AttachToComponent(CartMesh, FAttachmentTransformRules::KeepWorldTransform);
 }
 
 void ARADeliveryCart::MoveToLocation(const FVector& NewLocation)
@@ -82,8 +80,6 @@ void ARADeliveryCart::MoveToLocation(const FVector& NewLocation)
 		{
 			PathComp->OnRequestFinished.AddUObject(this, &ARADeliveryCart::HandleMoveCompleted);
 		}
-		//// 도착 이벤트 바인딩
-		//AICon->ReceiveMoveCompleted.AddDynamic(this, &ARADeliveryCart::HandleMoveCompleted);
 	}
 }
 
@@ -154,5 +150,10 @@ void ARADeliveryCart::HandleReturnTick()
 	// TODO : 풀매니저에게 반납하는 코드를 작성합니다.
 	OnReturnCartProduct.Broadcast(Products.Pop(), EProductType::Other);
 	ProductCapacity--;
+}
+
+void ARADeliveryCart::SetLoadingLocation(const FVector& Location)
+{
+	CacheLoadingLocation = Location;
 }
 
