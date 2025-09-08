@@ -2,6 +2,7 @@
 
 
 #include "Pawn/RADeliveryCart.h"
+#include "Components/SceneComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
 #include "Managers/RAPoolManager.h"
@@ -13,13 +14,16 @@ ARADeliveryCart::ARADeliveryCart()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = Root;
+
 	CartMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CartMesh"));
-	RootComponent = CartMesh;
+	CartMesh->SetupAttachment(Root);
 
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
 	
 	ProductCapacity = 0;
-	MaxCapacity = 5;
+	MaxCapacity = 3;
 	CartState = ECartState::Wait;
 }
 
@@ -27,6 +31,8 @@ void ARADeliveryCart::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// 현재 위치를 복귀 위치로
+	WaitLocation = GetActorLocation();
 }
 
 void ARADeliveryCart::Tick(float DeltaTime)
@@ -58,8 +64,6 @@ void ARADeliveryCart::AddProduct(AActor* Product)
 	}
 
 	Products.Add(Cast<ARATestActor>(Product));
-	// 물건 임시로 사라져 보이게 
-	//Product->SetActorHiddenInGame(true);
 	ProductCapacity++;
 
 	if (ProductCapacity >= MaxCapacity)
@@ -73,26 +77,30 @@ void ARADeliveryCart::MoveToLocation(const FVector& NewLocation)
 {
 	if (AAIController* AICon = GetAICon())
 	{
-		//FNavPathSharedPtr NavPath;
 		AICon->MoveToLocation(NewLocation);
 
 		if (UPathFollowingComponent* PathComp = AICon->GetPathFollowingComponent())
 		{
+			// 기존 델리게이트 전부 제거
+			PathComp->OnRequestFinished.Clear();
+
 			PathComp->OnRequestFinished.AddUObject(this, &ARADeliveryCart::HandleMoveCompleted);
 		}
 	}
 }
 
-void ARADeliveryCart::BackToLocation(const FVector& NewLocation)
+void ARADeliveryCart::BackToLocation()
 {
 	if (AAIController* AICon = GetAICon())
 	{
-		CachedCombackLocation = NewLocation;
 		const float AcceptanceRadius = 5.0f;
-		AICon->MoveToLocation(NewLocation, AcceptanceRadius);
+		AICon->MoveToLocation(WaitLocation, AcceptanceRadius);
 
 		if (UPathFollowingComponent* PathComp = AICon->GetPathFollowingComponent())
 		{
+			// 기존 델리게이트 전부 제거
+			PathComp->OnRequestFinished.Clear();
+
 			PathComp->OnRequestFinished.AddUObject(this, &ARADeliveryCart::HandleCombackCompleted);
 		}
 	}
@@ -100,7 +108,6 @@ void ARADeliveryCart::BackToLocation(const FVector& NewLocation)
 
 void ARADeliveryCart::OnArrived()
 {
-	//ReturnProducts();
 	OnCartArrived.Broadcast(this);
 }
 
@@ -118,7 +125,8 @@ void ARADeliveryCart::HandleCombackCompleted(FAIRequestID RequestID, const FPath
 	if (Result.Code == EPathFollowingResult::Success)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Cart %s : 복귀 성공! 다시 명령 대기하겠습니다"), *GetName());
-		SetActorLocation(CachedCombackLocation);
+		//SetState(ECartState::Wait);
+		SetActorLocation(WaitLocation); // 어긋나는 위치 보정
 		OnCartCombacked.Broadcast(this);
 	}
 }
@@ -147,7 +155,7 @@ void ARADeliveryCart::HandleReturnTick()
 		return;
 	}
 
-	// TODO : 풀매니저에게 반납하는 코드를 작성합니다.
+	// 이 델리게이트를 등록한 풀매니저 호출
 	OnReturnCartProduct.Broadcast(Products.Pop(), EProductType::Other);
 	ProductCapacity--;
 }

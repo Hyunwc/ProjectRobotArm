@@ -37,17 +37,17 @@ ARARobotArm::ARARobotArm()
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	BoxComp->SetupAttachment(Root);
 
-	StateWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("StateWidget"));
-	static ConstructorHelpers::FClassFinder<UUserWidget> StateWidgetRef(TEXT("/Game/UI/WBP_RobotArmState.WBP_RobotArmState_C"));
-	if (StateWidgetRef.Class)
-	{
-		StateWidget->SetWidgetClass(StateWidgetRef.Class);
-		StateWidget->SetupAttachment(Root);
-		StateWidget->SetRelativeLocation(FVector(0.f, 0.f, 400.f));
-		StateWidget->SetDrawSize(FVector2D(100.f, 30.f));
-		StateWidget->SetWidgetSpace(EWidgetSpace::Screen);
-		StateWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+	//StateWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("StateWidget"));
+	//static ConstructorHelpers::FClassFinder<UUserWidget> StateWidgetRef(TEXT("/Game/UI/WBP_RobotArmState.WBP_RobotArmState_C"));
+	//if (StateWidgetRef.Class)
+	//{
+	//	StateWidget->SetWidgetClass(StateWidgetRef.Class);
+	//	StateWidget->SetupAttachment(Root);
+	//	StateWidget->SetRelativeLocation(FVector(0.f, 0.f, 400.f));
+	//	StateWidget->SetDrawSize(FVector2D(100.f, 30.f));
+	//	StateWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	//	StateWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//}
 	
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 
@@ -84,6 +84,11 @@ void ARARobotArm::BeginPlay()
 
 	StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
 	ReturnTransform = StartTransform;
+
+	if (TargetDettachPoint)
+	{
+		TargetTransform = FTransform(FRotator::ZeroRotator, TargetDettachPoint->GetActorLocation(), FVector(1.f, 1.f, 1.f));
+	}
 
 	if (MyType != EProductType::Other)
 	{
@@ -130,13 +135,13 @@ void ARARobotArm::Tick(float DeltaTime)
 
 	OnRobotArmStateChanged.Broadcast(FSM->CurrentState);
 
-	if (StateWidget)
-	{
-		if (URARobotArmStateWidget* ArmWidget = Cast<URARobotArmStateWidget>(StateWidget->GetUserWidgetObject()))
-		{
-			ArmWidget->UpdateRobotArmState(FSM->CurrentState);
-		}
-	}
+	//if (StateWidget)
+	//{
+	//	if (URARobotArmStateWidget* ArmWidget = Cast<URARobotArmStateWidget>(StateWidget->GetUserWidgetObject()))
+	//	{
+	//		ArmWidget->UpdateRobotArmState(FSM->CurrentState);
+	//	}
+	//}
 }
 
 // 이 함수 들어오면 Search상태로
@@ -212,19 +217,15 @@ void ARARobotArm::AttachState()
 			// 그랩액터가 Other타입이면
 			if (GrabActor->GetProductType() == EProductType::Other)
 			{
+				// 캐시
+				// TODO : 여기서 하는 이유는 Search센서는 맨 앞에 있는데 Search에서 캐시하고 중간에 카트가 바뀌면 잘못된 참조를 하게됨
+				// 이를 방지하기 위해 나중에 구조 수정 필요.
+				CurrentCart = DeliveryManager->GetNextCart();
+
 				// 물건 집어서
 				GrabActor->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
 
 				MoveToTransform(GrabTransform, Delta);
-
-				// 카트에 넣고
-				ARADeliveryCart* Cart = DeliveryManager->GetNextCart();
-
-				TargetTransform = FTransform(FRotator::ZeroRotator, Cart->GetLoadingLocation(), FVector(1.f, 1.f, 1.f));
-				if (!Cart->CartIsFull())
-				{
-					Cart->AddProduct(GrabActor);
-				}
 
 				Alpha = 0.0f;
 				
@@ -281,6 +282,15 @@ void ARARobotArm::DettachState()
 		if (GrabActor->GetProductType() == EProductType::Other)
 		{
 			GrabActor->SetActorHiddenInGame(true);
+
+			// 카트에 넣고
+			
+			//ARADeliveryCart* Cart = DeliveryManager->GetNextCart();
+
+			if (!CurrentCart->CartIsFull())
+			{
+				CurrentCart->AddProduct(GrabActor);
+			}
 		}
 
 		GrabActor = nullptr;
