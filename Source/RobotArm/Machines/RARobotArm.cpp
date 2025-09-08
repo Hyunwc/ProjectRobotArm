@@ -48,10 +48,12 @@ ARARobotArm::ARARobotArm()
 	//	StateWidget->SetWidgetSpace(EWidgetSpace::Screen);
 	//	StateWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	//}
+
+	TargetTransform = FTransform(FRotator::ZeroRotator,  FVector::ZeroVector, FVector(1.f, 1.f, 1.f));
 	
 	FSM = CreateDefaultSubobject<URARobotArmFSM>(TEXT("FSM"));
 
-	MyType = EProductType::Default;
+	//MyType = EProductType::Default;
 
 	bReadyToGrab = false;
 }
@@ -89,16 +91,20 @@ void ARARobotArm::BeginPlay()
 	{
 		TargetTransform = FTransform(FRotator::ZeroRotator, TargetDettachPoint->GetActorLocation(), FVector(1.f, 1.f, 1.f));
 	}
-
-	if (MyType != EProductType::Other)
-	{
-		// 목표지점 설정
-		TargetTransform = TargetConveyor->DettachTransform;
-	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("난 내가 알아서 찾을게"));
+		UE_LOG(LogTemp, Warning, TEXT("나의 타겟 찾기 불가능"));
 	}
+
+	//if (MyType != EProductType::Other)
+	//{
+	//	// 목표지점 설정
+	//	TargetTransform = TargetConveyor->DettachTransform;
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("난 내가 알아서 찾을게"));
+	//}
 }
 
 void ARARobotArm::Tick(float DeltaTime)
