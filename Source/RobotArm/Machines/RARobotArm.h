@@ -60,7 +60,7 @@ public:
 	UBoxComponent* BoxComp;
 
 	// 목표 지점
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "RobotArm", meta=(MakeEditWidget=true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RobotArm")
 	FTransform TargetTransform;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "RobotArm")
