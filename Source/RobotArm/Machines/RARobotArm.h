@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Machines/RAMachineBase.h"
 #include "RAType.h"
+#include "Engine/TargetPoint.h"
 #include "RARobotArm.generated.h"
 
 class UControlRigComponent;
@@ -16,6 +17,7 @@ class ARATestActor;
 class ARASensor;
 class UWidgetComponent;
 class ARADeliveryManager;
+class ARADeliveryCart;
 //class URARobotArmStateWidget;
 
 
@@ -58,8 +60,11 @@ public:
 	UBoxComponent* BoxComp;
 
 	// 목표 지점
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RobotArm")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "RobotArm", meta=(MakeEditWidget=true))
 	FTransform TargetTransform;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "RobotArm")
+	ATargetPoint* TargetDettachPoint;
 
 	// 물건을 집는 속도
 	UPROPERTY(EditAnywhere, Category = "RobotArm")
@@ -103,13 +108,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Conveyor")
 	ARAConveyor* TargetConveyor;
 
+	// Other전용 카트 캐시
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Cart")
+	ARADeliveryCart* CurrentCart;
+
 	// 물품 분류 수를 증가시키라고 알리는 델리게이트
 	UPROPERTY(BlueprintAssignable)
 	FOnClassficationFinished OnClassficationFinished;
 
 	// 로봇암의 상태를 표시할 위젯 컴포넌트
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	UWidgetComponent* StateWidget;
+	//UPROPERTY(EditDefaultsOnly, Category = "UI")
+	//UWidgetComponent* StateWidget;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnRobotArmStateChanged OnRobotArmStateChanged;

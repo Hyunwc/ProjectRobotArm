@@ -10,6 +10,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "RADeliveryCart.generated.h"
 
+class USceneComponent;
 class UStaticMeshComponent;
 class UFloatingPawnMovement;
 class AAIController;
@@ -36,6 +37,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* Root;
+
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* CartMesh;
 
@@ -66,6 +70,10 @@ protected:
 	// 로봇암이 이 위치를 알 수 있게 캐시
 	UPROPERTY(VisibleAnywhere, Category = "Target")
 	FVector CacheLoadingLocation;
+
+	// 자신의 복귀 위치 저장
+	UPROPERTY(VisibleAnywhere, Category = "Cart")
+	FVector WaitLocation;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Cart")
@@ -108,7 +116,7 @@ public:
 
 	// 복귀
 	UFUNCTION()
-	void BackToLocation(const FVector& NewLocation);
+	void BackToLocation();
 
 	// 도착했을 때 호출
 	UFUNCTION()
