@@ -113,6 +113,8 @@ void ARADeliveryCart::OnArrived()
 
 void ARADeliveryCart::HandleMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
 {
+	// AI가 이동을 시작할 때 생성되는 고유 식별자ID
+	// AI의 경로 이동이 어떻게 완료되었는지
 	if (Result.Code == EPathFollowingResult::Success)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Cart %s : 도착성공"), *GetName());
