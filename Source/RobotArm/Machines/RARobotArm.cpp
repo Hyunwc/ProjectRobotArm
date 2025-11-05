@@ -341,7 +341,7 @@ void ARARobotArm::MoveToTransform(const FTransform& Destination, float DeltaTime
 
 	const FVector L = FMath::Lerp(StartTransform.GetLocation(), Destination.GetLocation(), Alpha);
 	const FQuat R = FQuat::Slerp(StartTransform.GetRotation(), Destination.GetRotation(), Alpha).GetNormalized();
-	const FVector S = FVector(1.f);
+	const FVector S = FVector(1.0f);
 
 	// 새로운 트랜스폼으로 컨트롤릭 업데이트
 	FTransform NewTransform(R, L, S);
