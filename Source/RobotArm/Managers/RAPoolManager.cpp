@@ -5,7 +5,6 @@
 #include "Machines/RAConveyor.h"
 #include "Pawn/RADeliveryCart.h"
 #include "EngineUtils.h"
-//#include "RATestActor.h"
 
 ARAPoolManager::ARAPoolManager()
 {
@@ -75,7 +74,7 @@ void ARAPoolManager::InitPooling()
 
         for (int32 i = 0; i < Count; i++)
         {
-            ARATestActor* NewActor = GetWorld()->SpawnActor<ARATestActor>(ProductClasses[Type], FVector::ZeroVector, FRotator::ZeroRotator);
+            ARAProduct* NewActor = GetWorld()->SpawnActor<ARAProduct>(ProductClasses[Type], FVector::ZeroVector, FRotator::ZeroRotator);
             NewActor->SetActorHiddenInGame(true);
             PoolMapWrapper.PoolMapArray.Add(NewActor);
         }
@@ -107,13 +106,13 @@ void ARAPoolManager::SpawnPool()
     }
 }
 
-ARATestActor* ARAPoolManager::GetPooling(EProductType Type)
+ARAProduct* ARAPoolManager::GetPooling(EProductType Type)
 {
     if (FPoolMapWrapper* Wrapper = PoolMap.Find(Type))
     {
         if (Wrapper->PoolMapArray.Num() > 0)
         {
-            ARATestActor* PoolActor = Wrapper->PoolMapArray[0];
+            ARAProduct* PoolActor = Wrapper->PoolMapArray[0];
             PoolActor->SetActorHiddenInGame(false);
             Wrapper->PoolMapArray.RemoveAt(0);
             return PoolActor;
@@ -123,7 +122,7 @@ ARATestActor* ARAPoolManager::GetPooling(EProductType Type)
     return nullptr;
 }
 
-void ARAPoolManager::ReturnPooling(ARATestActor* Actor, EProductType Type)
+void ARAPoolManager::ReturnPooling(ARAProduct* Actor, EProductType Type)
 {
     if (!Actor)
     {

@@ -8,16 +8,16 @@
 #include "RAConveyor.generated.h"
 
 class USplineComponent;
-class ARATestActor;
+class ARAProduct;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReturnProduct, ARATestActor*, Actor, EProductType, Type);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReturnProduct, ARAProduct*, Actor, EProductType, Type);
 
 USTRUCT(BlueprintType)
 struct FConveyorProduct
 {
 	GENERATED_BODY()
 
-	ARATestActor* TestActor;
+	ARAProduct* TestActor;
 	float Distance;
 
 	FConveyorProduct() : TestActor(nullptr), Distance(0.f) {}
@@ -65,7 +65,7 @@ public:
 		
 public:
 	UFUNCTION(BlueprintCallable)
-	void ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductClass);
+	void ProductSpawn(const TArray<TSubclassOf<ARAProduct>>& ProductClass);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveProduct(AActor* Actor);

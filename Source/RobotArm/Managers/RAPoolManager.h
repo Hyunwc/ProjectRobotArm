@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "RAType.h"
-#include "RATestActor.h"
+#include "RAProduct.h"
 #include "RAPoolManager.generated.h"
 
 class ARAConveyor;
@@ -18,7 +18,7 @@ struct FPoolMapWrapper
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleAnywhere)
-	TArray<ARATestActor*> PoolMapArray;
+	TArray<ARAProduct*> PoolMapArray;
 };
 
 UCLASS()
@@ -46,7 +46,7 @@ public:
 
 	// 상품 블루프린트를 담을 Map
 	UPROPERTY(EditAnywhere, Category = "Pool")
-	TMap<EProductType, TSubclassOf<ARATestActor>> ProductClasses;
+	TMap<EProductType, TSubclassOf<ARAProduct>> ProductClasses;
 
 	UPROPERTY(EditAnywhere, Category = "Conveyor")
 	TArray<ARAConveyor*> Conveyors;
@@ -70,9 +70,9 @@ public:
 	void SpawnPool();
 
 	UFUNCTION()
-	ARATestActor* GetPooling(EProductType Type);
+	ARAProduct* GetPooling(EProductType Type);
 
 	UFUNCTION()
-	void ReturnPooling(ARATestActor* Actor, EProductType Type);
+	void ReturnPooling(ARAProduct* Actor, EProductType Type);
 	
 };

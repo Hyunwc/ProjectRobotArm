@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "RASpawnManager.generated.h"
 
-class ARATestActor;
+class ARAProduct;
 class ARAConveyor;
 
 UCLASS()
@@ -25,7 +25,7 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<ARATestActor>> ProductClass;
+	TArray<TSubclassOf<ARAProduct>> ProductClass;
 
 	UPROPERTY(EditInstanceOnly)
 	ARAConveyor* TargetConveyor;

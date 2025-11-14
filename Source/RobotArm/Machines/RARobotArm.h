@@ -13,7 +13,7 @@ class USkeletalMeshComponent;
 class UBoxComponent;
 class URARobotArmFSM;
 class ARAConveyor;
-class ARATestActor;
+class ARAProduct;
 class ARASensor;
 class UWidgetComponent;
 class ARADeliveryManager;
@@ -87,7 +87,7 @@ public:
 
 	// 집을 액터
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RobotArm")
-	ARATestActor* GrabActor;
+	ARAProduct* GrabActor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Conveyor")
 	ARAConveyor* Conveyor;
@@ -129,7 +129,7 @@ public:
 
 	// 집어야할 액터를 관리할 큐
 	UPROPERTY(VisibleAnywhere, Category = "RobotArm")
-	TArray<ARATestActor*> ProductQueue;
+	TArray<ARAProduct*> ProductQueue;
 
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "RobotArm")
@@ -147,7 +147,7 @@ public:
 	void MoveToTransform(const FTransform& Destination, float DeltaTime);
 
 	UFUNCTION()
-	void HandleProduct(EProductType SearchType, ARATestActor* Actor);
+	void HandleProduct(EProductType SearchType, ARAProduct* Actor);
 
 	UFUNCTION()
 	void OnRobotArmOverlapBegin(UPrimitiveComponent* OverlappedComponent,

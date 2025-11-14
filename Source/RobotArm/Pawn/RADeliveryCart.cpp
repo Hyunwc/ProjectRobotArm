@@ -6,7 +6,7 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
 #include "Managers/RAPoolManager.h"
-#include "RATestActor.h"
+#include "RAProduct.h"
 //#include "AIController.h"
 
 
@@ -63,7 +63,7 @@ void ARADeliveryCart::AddProduct(AActor* Product)
 		return;
 	}
 
-	Products.Add(Cast<ARATestActor>(Product));
+	Products.Add(Cast<ARAProduct>(Product));
 	ProductCapacity++;
 
 	if (ProductCapacity >= MaxCapacity)
