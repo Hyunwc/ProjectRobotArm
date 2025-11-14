@@ -3,7 +3,7 @@
 
 #include "Managers/RASpawnManager.h"
 #include "Machines/RAConveyor.h"
-#include "RATestActor.h"
+#include "RAProduct.h"
 
 ARASpawnManager::ARASpawnManager()
 {

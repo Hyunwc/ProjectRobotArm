@@ -27,7 +27,7 @@ void ARASensor::OnSensorOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 {
 	//GEngine->AddOnScreenDebugMessage(15, 1.f, FColor::Emerald, TEXT("오버랩 성공"));
 	// 충돌 액터의 Enum값 추출
-	ARATestActor* Product = Cast<ARATestActor>(OtherActor);
+	ARAProduct* Product = Cast<ARAProduct>(OtherActor);
 	EProductType ProductType = Product->GetProductType();
 
 	OnProductDetected.Broadcast(Product->GetProductType(), Product);

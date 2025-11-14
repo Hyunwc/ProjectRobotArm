@@ -10,7 +10,7 @@
 #include "Components/RARobotArmFSM.h"
 #include "Components/WidgetComponent.h"
 #include "RAConveyor.h"
-#include "RATestActor.h"
+#include "RAProduct.h"
 #include "RASensor.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/RARobotArmStateWidget.h"
@@ -173,7 +173,7 @@ void ARARobotArm::SearchState()
 {
 	if (ProductQueue.Num() > 0)
 	{
-		ARATestActor* Product = ProductQueue[0];
+		ARAProduct* Product = ProductQueue[0];
 
 		if (IsValid(Product) && BoxComp->IsOverlappingActor(Product))
 		{
@@ -349,7 +349,7 @@ void ARARobotArm::MoveToTransform(const FTransform& Destination, float DeltaTime
 	ControlRigComponent->SetControlTransform(EndEffectorName, NewTransform, EControlRigComponentSpace::WorldSpace);
 }
 
-void ARARobotArm::HandleProduct(EProductType SearchType, ARATestActor* Actor)
+void ARARobotArm::HandleProduct(EProductType SearchType, ARAProduct* Actor)
 {
 	// 자신의 타입과 다르다면
 	if (SearchType != MyType)
@@ -376,7 +376,7 @@ void ARARobotArm::OnRobotArmOverlapBegin(UPrimitiveComponent* OverlappedComponen
 		return;
 	}
 
-	ARATestActor* Product = Cast<ARATestActor>(OtherActor);
+	ARAProduct* Product = Cast<ARAProduct>(OtherActor);
 	if (!Product)
 	{
 		return;

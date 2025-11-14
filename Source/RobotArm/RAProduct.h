@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "RAType.h"
-#include "RATestActor.generated.h"
+#include "RAProduct.generated.h"
 
 class USceneComponent;
 class UStaticMeshComponent;
 
 UCLASS()
-class ROBOTARM_API ARATestActor : public AActor
+class ROBOTARM_API ARAProduct : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	ARATestActor();
+	ARAProduct();
 
 protected:
 	virtual void BeginPlay() override;

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Machines/RAMachineBase.h"
 #include "RAType.h"
-#include "RATestActor.h"
+#include "RAProduct.h"
 #include "RASensor.generated.h"
 
 class UBoxComponent;
@@ -13,7 +13,7 @@ class UBoxComponent;
 
 // 타입을 감지하여 해당 타입을 가진 로봇암에게 탐색 모드로 들어가라고 알리는 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStateChangeSearch, EProductType, Type);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnProductDetected, EProductType, Type, ARATestActor*, Actor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnProductDetected, EProductType, Type, ARAProduct*, Actor);
 /**
  * 
  */

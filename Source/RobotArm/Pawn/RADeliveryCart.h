@@ -14,10 +14,10 @@ class USceneComponent;
 class UStaticMeshComponent;
 class UFloatingPawnMovement;
 class AAIController;
-class ARATestActor;
+class ARAProduct;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCartEventSignature, ARADeliveryCart* , Cart);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReturnCartProduct, ARATestActor*, Actor, EProductType, Type);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnReturnCartProduct, ARAProduct*, Actor, EProductType, Type);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCartStatusChanged, ARADeliveryCart*, Cart, ECartState, NewState);
 
 UCLASS()
@@ -51,7 +51,7 @@ protected:
 
 	// 물품을 담을 배열
 	UPROPERTY(VisibleAnywhere, Category = "Product")
-	TArray<ARATestActor*> Products;
+	TArray<ARAProduct*> Products;
 
 	// 현재 용량
 	UPROPERTY(VisibleAnywhere, Category = "Product")

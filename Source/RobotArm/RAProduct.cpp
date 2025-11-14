@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "RATestActor.h"
+#include "RAProduct.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 
 // Sets default values
-ARATestActor::ARATestActor()
+ARAProduct::ARAProduct()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -19,13 +19,13 @@ ARATestActor::ARATestActor()
 	Type = EProductType::Default;
 }
 
-void ARATestActor::BeginPlay()
+void ARAProduct::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void ARATestActor::Tick(float DeltaTime)
+void ARAProduct::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 

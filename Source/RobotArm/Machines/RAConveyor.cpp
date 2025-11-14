@@ -3,7 +3,7 @@
 
 #include "Machines/RAConveyor.h"
 #include "Components/SplineComponent.h"
-#include "RATestActor.h"
+#include "RAProduct.h"
 #include "Kismet/GameplayStatics.h"
 
 ARAConveyor::ARAConveyor()
@@ -61,7 +61,7 @@ void ARAConveyor::Tick(float DeltaTime)
 	}
 }
 
-void ARAConveyor::ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductClass)
+void ARAConveyor::ProductSpawn(const TArray<TSubclassOf<ARAProduct>>& ProductClass)
 {
 	if (ProductClass.Num() == 0)
 	{
@@ -70,7 +70,7 @@ void ARAConveyor::ProductSpawn(const TArray<TSubclassOf<ARATestActor>>& ProductC
 
 	int32 Index = FMath::RandRange(0, 3);
 
-	ARATestActor* NewActor = GetWorld()->SpawnActor<ARATestActor>(ProductClass[Index], SplineStartLocation, FRotator::ZeroRotator);
+	ARAProduct* NewActor = GetWorld()->SpawnActor<ARAProduct>(ProductClass[Index], SplineStartLocation, FRotator::ZeroRotator);
 	if (NewActor)
 	{
 		FConveyorProduct Product;
@@ -93,7 +93,7 @@ void ARAConveyor::AddProduct(AActor* Actor)
 	if (Actor)
 	{
 		FConveyorProduct NewProduct;
-		NewProduct.TestActor = Cast<ARATestActor>(Actor);
+		NewProduct.TestActor = Cast<ARAProduct>(Actor);
 		NewProduct.Distance = 0.0f;
 		Products.Add(NewProduct);
 	}
