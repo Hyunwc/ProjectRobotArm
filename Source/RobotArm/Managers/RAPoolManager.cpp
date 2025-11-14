@@ -66,7 +66,6 @@ void ARAPoolManager::InitPooling()
         // 해당 키(Type)가 없다면 다음으로
         if (!ProductClasses.Contains(Type))
         {
-            UE_LOG(LogTemp, Warning, TEXT("PoolManager: 해당 타입은 ProductClasses에 존재하지 않아요"));
             continue;
         }
 
@@ -74,7 +73,8 @@ void ARAPoolManager::InitPooling()
 
         for (int32 i = 0; i < Count; i++)
         {
-            ARAProduct* NewActor = GetWorld()->SpawnActor<ARAProduct>(ProductClasses[Type], FVector::ZeroVector, FRotator::ZeroRotator);
+            ARAProduct* NewActor = GetWorld()->SpawnActor<ARAProduct>(ProductClasses[Type], 
+                FVector::ZeroVector, FRotator::ZeroRotator);
             NewActor->SetActorHiddenInGame(true);
             PoolMapWrapper.PoolMapArray.Add(NewActor);
         }
@@ -92,10 +92,7 @@ void ARAPoolManager::SpawnPool()
 
     UEnum* EnumPtr = StaticEnum<EProductType>();
     
-    //int32 RandomIndex = 1 + FMath::RandHelper(EnumPtr->NumEnums() - 2);
     int32 RandomIndex = FMath::RandRange(1, static_cast<int32>(EnumPtr->GetMaxEnumValue() - 1));
-
-    //UE_LOG(LogTemp, Warning, TEXT("PoolManager: 랜덤값 %d"), RandomIndex);
 
     EProductType RandomType = static_cast<EProductType>(RandomIndex);
 
@@ -110,11 +107,11 @@ ARAProduct* ARAPoolManager::GetPooling(EProductType Type)
 {
     if (FPoolMapWrapper* Wrapper = PoolMap.Find(Type))
     {
-        if (Wrapper->PoolMapArray.Num() > 0)
+        if (!Wrapper->PoolMapArray.IsEmpty())
         {
-            ARAProduct* PoolActor = Wrapper->PoolMapArray[0];
+            ARAProduct* PoolActor = Wrapper->PoolMapArray.Last();
             PoolActor->SetActorHiddenInGame(false);
-            Wrapper->PoolMapArray.RemoveAt(0);
+            Wrapper->PoolMapArray.Pop();
             return PoolActor;
         }
     }

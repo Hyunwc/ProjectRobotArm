@@ -140,14 +140,6 @@ void ARARobotArm::Tick(float DeltaTime)
 	}
 
 	OnRobotArmStateChanged.Broadcast(FSM->CurrentState);
-
-	//if (StateWidget)
-	//{
-	//	if (URARobotArmStateWidget* ArmWidget = Cast<URARobotArmStateWidget>(StateWidget->GetUserWidgetObject()))
-	//	{
-	//		ArmWidget->UpdateRobotArmState(FSM->CurrentState);
-	//	}
-	//}
 }
 
 // 이 함수 들어오면 Search상태로
@@ -161,7 +153,6 @@ void ARARobotArm::StartSearch(EProductType SearchType)
 
 	TargetType = SearchType;
 	bReadyToGrab = true;
-	//FSM->ChangeState(ERobotArmState::Search);
 }
 
 void ARARobotArm::IdleState()
@@ -171,39 +162,35 @@ void ARARobotArm::IdleState()
 
 void ARARobotArm::SearchState()
 {
-	if (ProductQueue.Num() > 0)
-	{
-		ARAProduct* Product = ProductQueue[0];
-
-		if (IsValid(Product) && BoxComp->IsOverlappingActor(Product))
-		{
-			GrabActor = Product;
-
-			// 큐에서 처리할 물건 제거
-			ProductQueue.RemoveAt(0);
-
-			GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
-
-			Alpha = 0.0f;
-			FSM->ChangeState(ERobotArmState::Attach);
-		}
-		else
-		{
-			if (!IsValid(Product) || BoxComp->IsOverlappingActor(Product))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("로봇암 %s: 물건이 유효하지 않거나 범위를 벗어남 "), *GetName());
-				ProductQueue.RemoveAt(0);
-			}
-		}
-	}
-	else
+	// 큐가 비어있다면 다시 대기 상태로
+	if (ProductQueue.IsEmpty())
 	{
 		FSM->ChangeState(ERobotArmState::Idle);
+		return;
 	}
+
+	ARAProduct* Product = ProductQueue[0];
+
+	// 물건이 유효하고 범위 내에 있는지 확인
+	if (IsValid(Product) && BoxComp->IsOverlappingActor(Product))
+	{
+		GrabActor = Product;
+		GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
+
+		ProductQueue.RemoveAt(0);
+		Alpha = 0.0f;
+
+		FSM->ChangeState(ERobotArmState::Attach);
+	}
+	//else
+	//{
+	//	ProductQueue.RemoveAt(0);
+	//}
 }
 
 void ARARobotArm::AttachState()
 {
+	// 시작 위치 캐시
 	if (Alpha == 0.0f)
 	{
 		StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
@@ -212,46 +199,23 @@ void ARARobotArm::AttachState()
 	// 물건집으러 이동
 	MoveToTransform(GrabTransform, Delta);
 
-	if (Alpha >= 1.0f)
+	if (Alpha >= 1.0f && IsValid(GrabActor))
 	{
-		if (GrabActor)
+		// Other 타입일 경우 
+		if (GrabActor->GetProductType() == EProductType::Other)
 		{
-			//GEngine->AddOnScreenDebugMessage(8, 2.f, FColor::Red, TEXT("유효"));
-			GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
-			//GrabTransform = GrabActor->GetActorTransform();
-
-			// 그랩액터가 Other타입이면
-			if (GrabActor->GetProductType() == EProductType::Other)
-			{
-				// 캐시
-				// TODO : 여기서 하는 이유는 Search센서는 맨 앞에 있는데 Search에서 캐시하고 중간에 카트가 바뀌면 잘못된 참조를 하게됨
-				// 이를 방지하기 위해 나중에 구조 수정 필요.
-				CurrentCart = DeliveryManager->GetNextCart();
-
-				// 물건 집어서
-				GrabActor->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
-
-				MoveToTransform(GrabTransform, Delta);
-
-				Alpha = 0.0f;
-				
-				FSM->ChangeState(ERobotArmState::Carry);
-			}
-		
-			// 어태치 이 후에도 액터가 스플라인을 따라가지 않게 하기 위해 배열에서 제거
-			if (Conveyor)
-			{
-				Conveyor->RemoveProduct(GrabActor);
-			}
-
-			MoveToTransform(GrabTransform, Delta);
-
-			GrabActor->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
-		
-			Alpha = 0.0f;
-		
-			FSM->ChangeState(ERobotArmState::Carry);
+			CurrentCart = DeliveryManager->GetNextCart();
 		}
+		GrabActor->AttachToComponent(EndEffectorScene, FAttachmentTransformRules::KeepWorldTransform);
+		// 컨베이어에서 제거(스플라인 추적 중지)
+		if (Conveyor)
+		{
+			Conveyor->RemoveProduct(GrabActor);
+		}
+
+		Alpha = 0.0f;
+
+		FSM->ChangeState(ERobotArmState::Carry);
 	}
 }
 
@@ -273,39 +237,35 @@ void ARARobotArm::CarryState()
 
 void ARARobotArm::DettachState()
 {
-	if (GrabActor)
+	if (!IsValid(GrabActor))
 	{
-		// 메시 분리
-		GrabActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
-		if (MyType != EProductType::Other)
-		{
-			// 타겟 컨베이어에서 물품이 다시 이동할 수 있도록 컨베이어의 배열에 더해줌.
-			TargetConveyor->AddProduct(GrabActor);
-			OnClassficationFinished.Broadcast(GrabActor->GetProductType());
-		}
-
-		if (GrabActor->GetProductType() == EProductType::Other)
-		{
-			GrabActor->SetActorHiddenInGame(true);
-
-			// 카트에 넣고
-			
-			//ARADeliveryCart* Cart = DeliveryManager->GetNextCart();
-
-			if (!CurrentCart->CartIsFull())
-			{
-				CurrentCart->AddProduct(GrabActor);
-			}
-		}
-
-		GrabActor = nullptr;
-
-		//StartTransform = ControlRigComponent->GetControlTransform(EndEffectorName, EControlRigComponentSpace::WorldSpace);
-
 		Alpha = 0.0f;
 		FSM->ChangeState(ERobotArmState::Return);
+		return;
 	}
+
+	// 물건 분리
+	GrabActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	if (MyType != EProductType::Other)
+	{
+		// 컨베이어에서 물품이 다시 이동할 수 있도록 컨베이에 배열에 더해줌.
+		TargetConveyor->AddProduct(GrabActor);
+		OnClassficationFinished.Broadcast(GrabActor->GetProductType());
+	}
+	else if (GrabActor->GetProductType() == EProductType::Other)
+	{
+		GrabActor->SetActorHiddenInGame(true);
+
+		if (CurrentCart && !CurrentCart->CartIsFull())
+		{
+			CurrentCart->AddProduct(GrabActor);
+		}
+	}
+
+	GrabActor = nullptr;
+	Alpha = 0.0f;
+	FSM->ChangeState(ERobotArmState::Return);
 }
 
 void ARARobotArm::ReturnState()
@@ -321,11 +281,9 @@ void ARARobotArm::ReturnState()
 	if (Alpha >= 1.0f)
 	{
 		Alpha = 0.0f;
-
 		// 복귀 완료 후 큐에 물건이 남아있다면?
-		if (ProductQueue.Num() > 0)
+		if (!ProductQueue.IsEmpty())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("로봇암 %s : 아직 %d개나 남았네? 이런!"), *GetName(), ProductQueue.Num());
 			FSM->ChangeState(ERobotArmState::Search);
 		}
 		else
@@ -341,10 +299,9 @@ void ARARobotArm::MoveToTransform(const FTransform& Destination, float DeltaTime
 
 	const FVector L = FMath::Lerp(StartTransform.GetLocation(), Destination.GetLocation(), Alpha);
 	const FQuat R = FQuat::Slerp(StartTransform.GetRotation(), Destination.GetRotation(), Alpha).GetNormalized();
-	const FVector S = FVector(1.0f);
 
 	// 새로운 트랜스폼으로 컨트롤릭 업데이트
-	FTransform NewTransform(R, L, S);
+	FTransform NewTransform(R, L, FVector::OneVector);
 
 	ControlRigComponent->SetControlTransform(EndEffectorName, NewTransform, EControlRigComponentSpace::WorldSpace);
 }
@@ -369,28 +326,28 @@ void ARARobotArm::HandleProduct(EProductType SearchType, ARAProduct* Actor)
 	}
 }
 
-void ARARobotArm::OnRobotArmOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (!bReadyToGrab || GrabActor || !IsValid(OtherActor))
-	{
-		return;
-	}
-
-	ARAProduct* Product = Cast<ARAProduct>(OtherActor);
-	if (!Product)
-	{
-		return;
-	}
-
-	if (Product->GetProductType() == TargetType)
-	{
-		GrabActor = Product;
-		GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
-
-		Alpha = 0.0f;
-
-		FSM->ChangeState(ERobotArmState::Attach);
-
-		bReadyToGrab = false;
-	}
-}
+//void ARARobotArm::OnRobotArmOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+//{
+//	if (!bReadyToGrab || GrabActor || !IsValid(OtherActor))
+//	{
+//		return;
+//	}
+//
+//	ARAProduct* Product = Cast<ARAProduct>(OtherActor);
+//	if (!Product)
+//	{
+//		return;
+//	}
+//
+//	if (Product->GetProductType() == TargetType)
+//	{
+//		GrabActor = Product;
+//		GrabTransform = GrabActor->GetOwnerMesh()->GetSocketTransform(TEXT("GrabSocket"));
+//
+//		Alpha = 0.0f;
+//
+//		FSM->ChangeState(ERobotArmState::Attach);
+//
+//		bReadyToGrab = false;
+//	}
+//}
