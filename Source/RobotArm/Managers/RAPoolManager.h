@@ -60,6 +60,7 @@ public:
 	FTimerHandle SpawnTimer;
 
 private:
+	UPROPERTY()
 	int32 Size;
 
 public:
